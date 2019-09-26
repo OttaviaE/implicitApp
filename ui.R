@@ -69,24 +69,30 @@ ui <- fluidPage(
                                   font-variant: small-caps;
 
                                   }
-                                  # .shiny-notification{
-                                  #   position: fixed;
-                                  #   top: 33%;
-                                  #   left: 53%;
-                                  #   right: 33%;
-                                  #   background-color:#c7ccff;
-                                  #   color: #7a6db1;
-                                  # }
+                                  .shiny-notification{
+                                    background-color:#c7ccff;
+                                    color: #7a6db1;
+                                  }
                                  body {
                                   background-color: #fdfaff;
                                  }
-}
+                                .navbar { 
+                                  background-color: #f4feff;
+                                  }
+                                  .navbar-default .navbar-nav > .active > a, 
+                                  .navbar-default .navbar-nav > .active > a:focus, 
+                                  .navbar-default .navbar-nav > .active > a:hover {
+                                    color: 	#f4feff;
+                                background-color: 	#cad4f3;
+                                  }
                                   "
     )
   )),
   navbarPage(id = "measures", "",
              
-              tabPanel(h1("General Information"), 
+             
+              tabPanel(h1("General Information", 
+                          style = "color:#117094;"), 
                 HTML(
                   "
                                 <blockquote>
@@ -101,9 +107,9 @@ ui <- fluidPage(
                                 </p>
                                 <p>
                                 Specific instructions are given for uploading
-                                the data for the scores computation, and the
+                                the data for the scores computation. The
                                 two Web Applications work independetly from one
-                                another. AT the end of the computation users
+                                another. At the end of the computation users
                                 can download the results and the graphs.
                                 </p>
                                 </blockquote>"
@@ -172,10 +178,12 @@ ui <- fluidPage(
                  "
                         <blockquote>
                                  This App was developed by Ottavia M. Epifania
-                                 at the University of Padova (Italy). The source code of the app
-                                 and the raw data are available on my <a href=https://github.com/OttaviaE/DscoreApp>GitHub page</a>.
+                                 at the University of Padova (Italy). The source 
+                                 code of the app and the raw data used for the 
+                                 examples are available on my 
+                                 <a href=https://github.com/OttaviaE/DscoreApp>GitHub page</a>.
                                  For any further information on the App functioning or
-				 for any problems regarding the App,
+				                         for any problems regarding the App,
                                  please contact me at: otta.epifania@gmail.com
                                  or marinaottavia.epifania@phd.unipd.it
                                  </blockquote>
@@ -192,13 +200,25 @@ ui <- fluidPage(
                HTML(
                  "
                         <blockquote>
-                                 This app is a free software, and you can redistribute it and or modify it under the terms of the
-                                 <a href=https://opensource.org/licenses/MIT>MIT license</a>.
-                                 </blockquote>
+                        This app is a free software, and you can 
+                        redistribute it and or modify it under the terms of the
+                        <a href=https://opensource.org/licenses/MIT>MIT license</a>.
+                        <p>
+                        If you want to contribute to this app, you can open a 
+                        new branch on 
+                        <a href=https://github.com/OttaviaE/implicitApp>implicitApp </a>,
+                        modify the code, and submit your pull request for added 
+                        features. 
+                        </p>
+                                 
+                        </blockquote>
                                  "
                )
              ))),
-    tabPanel(h1("IAT"), 
+             
+             # IAT -----
+    tabPanel(h1("IAT", 
+                style = "color:#117094;"), 
              
              div(
                id = "Dapp",
@@ -209,22 +229,28 @@ ui <- fluidPage(
                  sidebarPanel(
                    style = "background-color: 		#e1e9f9;",
                    # use example data
-                   a(id = "example_det", h4("Example data",  style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                   a(id = "example_det", h4("Example data",  
+                                            style = "font-style: normal; 
+                                            font-size: 11pt;"), href = "#"),
                    shinyjs::hidden(div(
                      id = "details_example",
                      helpText(
-                       h6("Check this box to use an example Race IAT dataset for computing",
+                       h6("Check this box to use an example Race IAT dataset 
+                          for computing",
                           "the D-score.")
                      )
                    )),
                    # Checkbox for the toy dataset (default = F)
-                   checkboxInput("checkbox", HTML("<p class =\"normal\">Race IAT dataset</p>"),
+                   checkboxInput("checkbox", HTML("<p class =\"normal\">
+                                                  Race IAT dataset</p>"),
                                  value = FALSE),
                    # Conditional Panel for importing users' dataframe 
                    conditionalPanel(
                      condition = "input.checkbox == false",
                      # data import pop-up menu
-                     a(id = "imp_det", h4("Choose CSV file", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                     a(id = "imp_det", h4("Choose CSV file", 
+                                          style = "font-style: normal; 
+                                          font-size: 11pt;"), href = "#"),
                      shinyjs::hidden(div(
                        id = "details_import",
                        helpText(
@@ -237,7 +263,8 @@ ui <- fluidPage(
                      fileInput(
                        'datafile',
                        '',
-                       accept = c('text/csv', 'text/comma-separated-values,text/plain')
+                       accept = c('text/csv', 
+                                  'text/comma-separated-values,text/plain')
                      )
                    ),
                    
@@ -245,10 +272,14 @@ ui <- fluidPage(
                    fluidRow(
                      column(
                        5,
-                       a(id = "practice_det_mapA", h4("MappingA Practice block label", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "practice_det_mapA", 
+                         h4("MappingA Practice block label", 
+                            style = "font-style: normal; font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
                          id = "details_practice_mapA",
-                         helpText(h6("How did you label the MappingA pratice block?"))
+                         helpText(h6("How did you label the MappingA pratice 
+                                     block?"))
                        )),
                        # actual labels for the block, taken from the dataset
                        uiOutput("label_mapA_practice")
@@ -256,10 +287,14 @@ ui <- fluidPage(
                      ),
                      column(
                        5,
-                       a(id = "test_det_mapA", h4("MappingA Test block label", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "test_det_mapA", h4("MappingA Test block label", 
+                                                  style = "font-style: normal; 
+                                                  font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
                          id = "details_test_mapA",
-                         helpText(h6("How did you label the MappingA test block?"))
+                         helpText(h6("How did you label the MappingA 
+                                     test block?"))
                        )),
                        uiOutput("label_mapA_test")
                      )
@@ -268,20 +303,28 @@ ui <- fluidPage(
                    fluidRow(
                      column(
                        5,
-                       a(id = "practice_det_mapB", h4("MappingB Practice block label", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "practice_det_mapB", 
+                         h4("MappingB Practice block label",
+                            style = "font-style: normal; font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
                          id = "details_practice_mapB",
-                         helpText(h6("How did you label the MappingB pratice block?"))
+                         helpText(h6("How did you label the MappingB pratice 
+                                     block?"))
                        )),
                        uiOutput("label_mapB_practice")
                        
                      ),
                      column(
                        5,
-                       a(id = "test_det_mapB", h4("MappingB Test block label", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "test_det_mapB", 
+                         h4("MappingB Test block label", 
+                            style = "font-style: normal; 
+                            font-size: 11pt;"), href = "#"),
                        shinyjs::hidden(div(
                          id = "details_test_mapB",
-                         helpText(h6("How did you label the MappingB pratice block?"))
+                         helpText(h6("How did you label the MappingB pratice 
+                                     block?"))
                        )),
                        uiOutput("label_mapB_test")
                      )
@@ -292,15 +335,21 @@ ui <- fluidPage(
                    fluidRow(
                      column(4,
                             actionButton("load", "Prepare Data")),
-                     # Pop-up menu for the uploading button and the Data ready message
+                     # Pop-up menu for the uploading button and the Data ready 
+                     # message
                      column(
                        4,
-                       a(id = "info_prepare", h4("Show info",style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "info_prepare", 
+                         h4("Show info", 
+                            style = "font-style: normal; font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
                          id = "details_prepare",
                          helpText(
-                           h6("Upload and prepare data for calculating the D score \n
-                  When it's finished a message will appear next the button")
+                           h6("Upload and prepare data for calculating the 
+                           D-score \n
+                          When it's finished a message will appear next 
+                              the button")
                          )
                        ))
                        
@@ -311,7 +360,10 @@ ui <- fluidPage(
                      
                    ),
                    # D-score selection pop-up menu 
-                   a(id = "select_D", h4("Show info", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                   a(id = "select_D", 
+                     h4("Show info", 
+                        style = "font-style: normal; font-size: 11pt;"), 
+                     href = "#"),
                    shinyjs::hidden(div(
                      id = "details_D",
                      helpText(h6("Which D-score would you like to compute?"))
@@ -339,18 +391,24 @@ ui <- fluidPage(
                    fluidRow(
                      column(
                        4,
-                       a(id = "accuracy_det", h4("Accuracy deletion", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "accuracy_det", 
+                         h4("Accuracy deletion", 
+                            style = "font-style: normal; font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
                          id = "details_accuracy",
                          helpText(
-                           h6("Apply cleaning strategy based on accuracy deletion?")
+                           h6("Apply cleaning strategy based on accuracy 
+                              deletion?")
                          )
                        )),
-                       # Accuracy deletion selection (default = 1 = No deletion selected)
+                       # Accuracy deletion selection 
+                       # (default = 1 = No deletion selected)
                        radioButtons(
                          "accuracy_del",
                          label = "",
-                         choices = list("No" = 1, "Yes (Practice + Test blocks)" = 2),
+                         choices = list("No" = 1, 
+                                        "Yes (Practice + Test blocks)" = 2),
                          
                          selected = 1
                        )
@@ -360,10 +418,14 @@ ui <- fluidPage(
                        3,
                        conditionalPanel(
                          condition = "input.accuracy_del == '2'",
-                         a(id = "percentage_det", h4("Error Percentage", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                         a(id = "percentage_det", 
+                           h4("Error Percentage", 
+                              style = "font-style: normal; font-size: 11pt;"), 
+                           href = "#"),
                          shinyjs::hidden(div(
                            id = "details_perc",
-                           helpText(h6("Choose the error percentage you are willing to accept"))
+                           helpText(h6("Choose the error percentage you are 
+                                       willing to accept"))
                          )),
                          # error percentage selection
                          numericInput(
@@ -378,14 +440,19 @@ ui <- fluidPage(
                      # Fast participants deletion pop-up menu
                      column(
                        3,
-                       a(id = "sbjFast_det", h4("Fast participants deletion", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "sbjFast_det", 
+                         h4("Fast participants deletion", 
+                            style = "font-style: normal; font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
                          id = "details_sbjFast",
                          helpText(
-                           h6("Eliminate participants with more than 10% of responses faster than 300 ms?")
+                           h6("Eliminate participants with more than 10% of 
+                              responses faster than 300 ms?")
                          )
                        )),
-                       # Fast participants deletion selection (default = 1 = No deletion selected)
+                       # Fast participants deletion selection 
+                       # (default = 1 = No deletion selected)
                        radioButtons(
                          "sbjFast_del",
                          label = "",
@@ -394,14 +461,18 @@ ui <- fluidPage(
                        )
                      )
                    ),
-                   # Graphic display of the results (appears only when a D-score is selected)
+                   # Graphic display of the results 
+                   # (appears only when a D-score is selected)
                    conditionalPanel(
                      condition = "input.sel_d != '0'",
                      # Graphic selection pop-up menu
                      fluidRow(
                        column(
                          4,
-                         a(id = "graph_det", h4("Graphic display", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                         a(id = "graph_det", 
+                           h4("Graphic display", 
+                              style = "font-style: normal; font-size: 11pt;"), 
+                           href = "#"),
                          shinyjs::hidden(div(
                            id = "details_graph",
                            helpText(h6("How would you display your D-scores?"))
@@ -419,18 +490,25 @@ ui <- fluidPage(
                            selected = 1
                          )
                        ),
-                       # Conditional panel for the participants' display order in the Point graph
+                       # Conditional panel for the participants' display order 
+                       # in the Point graph
                        column(
                          5,
                          conditionalPanel(
                            condition = "input.graph == '1'",
-                           # Participants' display order in the Point graph pop-up menu
-                           a(id = "point_det", h4("Point Graph", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                           # Participants' display order in the Point graph 
+                           # pop-up menu
+                           a(id = "point_det", 
+                             h4("Point Graph", 
+                                style = "font-style: normal; font-size: 11pt;"), 
+                             href = "#"),
                            shinyjs::hidden(div(
                              id = "details_point",
-                             helpText(h6("How would you like to order the Participants?"))
+                             helpText(h6("How would you like to order the 
+                                         Participants?"))
                            )),
-                           # Participants' display order in the Point graph selection (default = None)
+                           # Participants' display order in the Point graph 
+                           # selection (default = None)
                            selectInput(
                              "point_opts",
                              "",
@@ -446,9 +524,12 @@ ui <- fluidPage(
                      ),
                      # Conditional panel for number of bins in the histogram graph
                      conditionalPanel(
-                       condition = "input.graph == '2'",
+                       condition = "input.graph == '2' || input.graph == '4'",
                        # Number of bins the histogram graph pop-up menu
-                       a(id = "hist_det", h4("Histogram number of bins", style = "font-style: normal; font-size: 11pt;"), href = "#"),
+                       a(id = "hist_det", 
+                         h4("Histogram number of bins", 
+                            style = "font-style: normal; font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
                          id = "details_histogram",
                          helpText(h6("Select the number of bins you want"))
@@ -462,30 +543,12 @@ ui <- fluidPage(
                          step = 1,
                          value = 30
                        )
-                     ),
-                     # Conditional panel for number of bins in the histogram + density graph
-                     conditionalPanel(
-                       condition = "input.graph == '4'",
-                       # Number of bins the histogram + density graph pop-up menu
-                       a(id = "hist_det1", h4("Histogram number of bins", style = "font-style: normal; font-size: 11pt;"), href = "#"),
-                       shinyjs::hidden(div(
-                         id = "details_histogram1",
-                         helpText("Select the number of bins you want")
-                       )),
-                       # Number of bins the histogram + density graph selection (default = 30)
-                       sliderInput(
-                         "num.bin1",
-                         label = "",
-                         min = 1,
-                         max = 100,
-                         step = 1,
-                         value = 30
-                       )
                      )
                    ),
                    
                    # Include clarifying text
-                   helpText(h6("Note: Please, read the READ ME FIRST before doing anything")),
+                   helpText(h6("Note: Please, read the READ ME FIRST before 
+                               doing anything")),
                    # D-score calcution/update button
                    actionButton("update", "Calculate & Update"),
                    # Restart app button
@@ -500,7 +563,7 @@ ui <- fluidPage(
                    tabPanel(
                      h4("Read Me First"),
                      # Introduction pop-up menu
-                     a(id = "imp_intro", h3("The D-score Shiny App"), href = "#"),
+                     a(id = "imp_intro", h3("The IAT D-score Shiny App"), href = "#"),
                      shinyjs::hidden(div(
                        id = "details_intro",
                        HTML(
@@ -511,8 +574,8 @@ ui <- fluidPage(
                                  <em>D-score</em>s for the Implicit Association
                                  Test (IAT; Greenwald et al., 1998), according to Greenwald, Nosek and
                                  Banaji (2003). Beyond the computation of the
-                                 <em>D-score</em>s <em>per se</em>, the
-                                 DShinyApp app generates different graphic
+                                 <em>D-score</em>s <em>per se</em>, this app creates 
+                                 different graphic
                                  representations which will allow you to observe
                                  how the <em>D-score</em>s change according to
                                  the selected <em>D</em> (e.g.,
@@ -555,7 +618,7 @@ ui <- fluidPage(
                                  only either the target or the attirbute stimuli
                                  are sorted in their reference categories).</li>
                                  <li> The IAT data are in a CSV file with
-                                 &#34;,&#34; set as separator of the columns.
+                                 &#34;,&#34; set as columns separator.
                                  In the template downloadable at
                                  &#34;Download CSV Template&#34;, &#34;,&#34;
                                  is already set as the column separator.</li>
@@ -565,7 +628,7 @@ ui <- fluidPage(
 
                                  <ul>
                                  <li> <b> participant&#58;</b> it defines the
-                                 ID of the participants. The IDs may be either
+                                 IDs of the participants. The IDs may be either
                                  numeric (e.g., 1,2,..300...450) or a string
                                  (e.g., ss01, aa05, JohnDoe1001 etc.). </li>
                                  <li> <b> block&#58; </b> It defines the blocks
@@ -599,7 +662,7 @@ ui <- fluidPage(
                                  variables with the specific associated names.
                                  </blockquote>"
                        ),
-                       # Download template button
+                       # Download template button IAT ----
                        fluidRow(column(
                          3,
                          offset = 8,
@@ -621,7 +684,7 @@ ui <- fluidPage(
                                 Otherwise, you can import your dataset by
                                 following these instructions:</p>
                                 <ul>
-                                <li> Use the <b>&#34;Browse&#34;</b> function
+                                <li> Use the <b>&#34;Browse&#34;</b> button
                                 to select your data. </li>
                                 <li> Select the labels of the <em>practice</em>
                                 and <em>test</em> blocks of both <b>Mapping A</b>
@@ -767,8 +830,7 @@ ui <- fluidPage(
                        HTML(
                          "
                                  <blockquote>
-
-                                 <ul>
+<ul>
                                  <li> <b><em>D-score</em>&#58;</b> Graphics
                                  display of the <em>D-score</em>s of the
                                  participants, according to the specified
@@ -946,7 +1008,7 @@ ui <- fluidPage(
                        )
                      ))
                    ),
-                   # Results Panel
+                   # Results Panel IAT ----
                    tabPanel(
                      h4("D- Score results"),
                      # Graphic representation of the results
@@ -1002,7 +1064,8 @@ ui <- fluidPage(
                          )
                          
                        ),
-                       # Conditional panel for the number of participants exceeding the 10 % of fast responses threshold
+                       # Conditional panel for the number of participants 
+                      # exceeding the 10 % of fast responses threshold
                        conditionalPanel(condition = "input.sbjFast_del == '2'",
                                         column(
                                           2,
@@ -1016,7 +1079,7 @@ ui <- fluidPage(
                        verbatimTextOutput("pt_reliability")
                      )
                    ),
-                   # Descriptive statistics Panel
+                   # Descriptive statistics Panel IAT ---
                    tabPanel(
                      h4("Descriptive Statistics"),
                      fluidRow(column(
@@ -1036,7 +1099,8 @@ ui <- fluidPage(
              )
              ),
     # SC-IAT -----
-    tabPanel(h1("SC-IAT"), 
+    tabPanel(h1("SC-IAT", 
+                style = "color:#117094;"), 
              
              div(
       id = "sciatApp",
@@ -1044,43 +1108,52 @@ ui <- fluidPage(
       
       sidebarLayout(
         sidebarPanel(
-          # choose example sciat_datast
-          a(id = "sc_exampledata", "Example Dataset SC-IAT", href = "#"),
+          style = "background-color: #e1e9f9;",
+          # choose example sciat_dataset
+          a(id = "sc_exampledata", 
+            h4("Example Dataset SC-IAT", 
+               style = "font-style: normal; font-size: 11pt;"), href = "#"),
           shinyjs::hidden(div(
             id = "details_scdata",
             helpText(
-              "Check this box to use an example Dark Chocolate SC-IAT"
+              h6("Check this box to use an example Dark Chocolate SC-IAT")
             )
           )),
           
           
-          checkboxInput("example_sciat", label = "SC-IAT example dataset", 
+          checkboxInput("example_sciat", HTML("<p class =\"normal\"> 
+                                              SC-IAT example dataset</p>"), 
                         value = F),
           conditionalPanel(
             condition = "input.example_sciat == false",
             # data import
-            a(id = "impsc_det", "Choose CSV file", href = "#"),
+            a(id = "impsc_det", 
+              h4("Choose CSV file", 
+                 style = "font-style: normal; font-size: 11pt;"), href = "#"),
             shinyjs::hidden(div(
               id = "details_scimport",
               helpText(
-                "Import data. CSV separator must be comma (,).",
+                h6("Import data. CSV separator must be comma (,).",
                 "Please use the template from READ ME FIRST",
-                "compiled according to instructions."
+                "compiled according to instructions.")
               )
             )),
             fileInput(
-              'datafile',
+              'datafile_sc',
               '',
               accept = c('text/csv', 'text/comma-separated-values,text/plain')
             )
           ),
           
           # check whether data include response time window
-          a(id = "info_window", "Response time window", href = "#"),
+          a(id = "info_window", 
+            h4("Response time window", 
+               style = "font-style: normal; font-size: 11pt;"),
+            href = "#"),
           shinyjs::hidden(div(
             id = "details_window",
             helpText(
-              "Did your administration procedure include a response time window?"
+              h6("Did your administration procedure include a response time window?")
             )
           )),
           checkboxInput("window_check", label = "Response time window") ,
@@ -1090,28 +1163,34 @@ ui <- fluidPage(
             shinyjs::hidden(div(
               id = "details_windowlabel",
               helpText(
-                "Which is the label identifying responses beyond the response 
-                time window?"
+                h6("Which is the label identifying responses beyond the response 
+                time window?")
               )
             )),
             textInput("label_window", label = "",  value = "")
           ),
           
           fluidRow(column(4, 
-                          a(id = "info_mapAsciat1", "Label Mapping A", href = "#"),
+                          a(id = "info_mapAsciat1", 
+                            h4("Label Mapping A", 
+                               style = "font-style: normal; font-size: 11pt;"), 
+                            href = "#"),
                           shinyjs::hidden(div(
                             id = "details_mapAsciat1",
                             helpText(
-                              "How did you label the Mapping A?"
+                              h6("How did you label the Mapping A?")
                             )
                           )),
                           uiOutput("label_mapA_sciat1")), 
                    column(4, 
-                          a(id = "info_mapBsciat1", "Label Mapping B", href = "#"),
+                          a(id = "info_mapBsciat1", 
+                            h4("Label Mapping B", 
+                               style = "font-style: normal; font-size: 11pt;"), 
+                            href = "#"),
                           shinyjs::hidden(div(
                             id = "details_mapBsciat1",
                             helpText(
-                              "How did you label the Mapping B?"
+                              h6("How did you label the Mapping B?")
                             )
                           )),
                           uiOutput("label_mapB_sciat1"))),
@@ -1121,12 +1200,14 @@ ui <- fluidPage(
                    hr()),
             column(
               4,
-              a(id = "info_scprepare", "Show info", href = "#"),
+              a(id = "info_scprepare", 
+                h4("Show info", 
+                   style = "font-style: normal; font-size: 11pt;"), href = "#"),
               shinyjs::hidden(div(
                 id = "details_scprepare",
                 helpText(
-                  "Upload and prepare data for calculating the D score \n
-                  When it's finished a message will appear next the button"
+                  h6("Upload and prepare data for calculating the D score \n
+                  When it's finished a message will appear next the button")
                 )
               ))
               
@@ -1150,23 +1231,31 @@ ui <- fluidPage(
               #        checkboxInput("comp_rel", label = "Reliability") 
               # ), 
               column(3, 
-                     a(id = "info_delslow", "Delete slow trials", href = "#"),
+                     a(id = "info_delslow", 
+                       h4("Delete slow trials", 
+                          style = "font-style: normal; font-size: 11pt;"), href = "#"),
                      shinyjs::hidden(div(
                        id = "details_comprel",
                        helpText(
-                         "Would you like to delete slow trials?"
+                         h6("Would you like to delete slow trials?")
                        )
                      )),
-                     checkboxInput("slow_del_sc", label = "Delete slow") 
+                     checkboxInput("slow_del_sc", label = 
+                                     h4("Delete slow trials", 
+                                        style = "font-style: normal; 
+                                        font-size: 11pt;")) 
               ), 
               column(4, 
                      conditionalPanel(
-                       condition = "input.slow_del == 1", 
-                       a(id = "info_timeslow", "Time threshold", href = "#"),
+                       condition = "input.slow_del_sc == 1", 
+                       a(id = "info_timeslow_sc", 
+                         h4("Time threshold", 
+                            style = "font-style: normal; font-size: 11pt;"), 
+                         href = "#"),
                        shinyjs::hidden(div(
-                         id = "details_timesslo",
+                         id = "details_timeslow_sc",
                          helpText(
-                           "Set the response time threshold"
+                           h6("Set the response time threshold")
                          )
                        )),
                        numericInput("time_slow", label = "", 
@@ -1183,10 +1272,14 @@ ui <- fluidPage(
             fluidRow(
               column(
                 4,
-                a(id = "sc_graph_det", "Graphic display", href = "#"),
+                a(id = "sc_graph_det", h4("Graphic display", 
+                                          style = "font-style: normal; 
+                                          font-size: 11pt;"), href = "#"),
                 shinyjs::hidden(div(
                   id = "sc_details_graph",
-                  helpText("How would you display the results?")
+                  helpText(
+                    h6("How would you display the results?")
+                    )
                 )),
                 radioButtons(
                   "graph_sciat",
@@ -1203,10 +1296,14 @@ ui <- fluidPage(
                 5,
                 conditionalPanel(
                   condition = "input.graph_sciat == '1'",
-                  a(id = "point_det_sc", "Point Graph", href = "#"),
+                  a(id = "point_det_sc", h4("Point Graph", 
+                                            style = "font-style: normal; 
+                                            font-size: 11pt;"), href = "#"),
                   shinyjs::hidden(div(
                     id = "details_point_sc",
-                    helpText("How would you like to order the Participants?")
+                    helpText(
+                      h6("How would you like to order the Participants?")
+                      )
                   )),
                   selectInput(
                     "point_opts_sc",
@@ -1219,16 +1316,43 @@ ui <- fluidPage(
                     selected = 1
                   )
                 )
-              ))
+              )), 
+            fluidRow(
+              conditionalPanel(
+                condition = "input.graph_sciat == '2' || 
+                input.graph_sciat == '4'", 
+                # Number of bins the histogram + density graph pop-up menu
+                a(id = "hist_sc", h4("Histogram number of bins", 
+                                     style = "font-style: normal; 
+                                     font-size: 11pt;"), href = "#"),
+                shinyjs::hidden(div(
+                  id = "sc_histogram",
+                  helpText(
+                    h6("Select the number of bins you want")
+                    )
+                )),
+                # Number of bins the histogram + density graph selection 
+                # (default = 30)
+                sliderInput(
+                  "num.bin_sc",
+                  label = "",
+                  min = 1,
+                  max = 100,
+                  step = 1,
+                  value = 30
+                )
+              )
+            )
           ),
           # action buttons 
           actionButton("sc_update", "Calculate & Update"),
           actionButton("sc_reset", "Reset & Restart"),
           downloadButton("downloadSciat", "Download")
         ), 
+        # MAIN PANEL SC-IAT -----
         mainPanel(
           tabsetPanel(
-          tabPanel(        h4("Read me first"),
+          tabPanel(        h4("Read Me First"),
                            a(id = "imp_intro_sc", h3("The SC-IAT D-score Shiny App"), 
                              href = "#"),
                            shinyjs::hidden(div(
@@ -1249,6 +1373,16 @@ ui <- fluidPage(
                                condition and their order of presenatation.
                                </p>
                                <p>
+                               Within the features offered by the app, you can set 
+                               the id for the trials beyond the response time
+                               window (if your adminitsration procedure included 
+                               one) or you can can decide whether to discard 
+                               trials beyond a time threshold you can specify. 
+                               Finally, can change the graphic display of the 
+                               results to inspect them both at individual level
+                               and sample level.   
+                               </p>
+                               <p>
                                In the following section, details on the functioning 
                                of the app and its feauters are provided.
                                </p>
@@ -1261,12 +1395,66 @@ ui <- fluidPage(
                              HTML(
                                "
                                  <blockquote>
+                                 <p>
+                                 Before importing the data&#58;
+                                 </p>
+                                 <ul>
+                                 <li> Remove from the dataset the pure practice
+                                 blocks of the SC-IAT (usually, the first and 
+                                 third block). </li>
+                                 <li> Save the dataset in a CSV file with 
+                                 &#34;,&#34; set as columns separator. In the 
+                                 template downloadbale at 
+                                 &#34;Download SC-IAT CSV Template&#34;, the 
+                                 &#34;,&#34; is already set as columns separator.
+                                 </li>
+                                 <li> Rename the names of the columns of your file
+                                 with the same columns names given in the 
+                                 Template file, and define the variables as 
+                                 follows&#58; </li>
                                  
+                                 <ul> 
+                                 <li> <b> participant&#58;</b> it defines the
+                                 IDs of the participants. The IDs may be either
+                                 numeric (e.g., 1,2,..300...450) or a string
+                                 (e.g., ss01, aa05, JohnDoe1001 etc.). </li>
+                                 <li> <b> block&#58; </b> It defines the blocks
+                                 of the SC-IAT. The labels identifying each block
+                                 are not importart <em>per se</em>. The important
+                                 thing is that each block is defined by a unique
+                                 label, hence there have to be <em><strong>two
+                                 distinct labels</strong></em> defining the two
+                                 mapping conditions of the SC-IAT, such as 
+                                 &#34;CokeBad&#34; and &#34;CokeGood&#34; in a 
+                                 Coke-SC-IAT. These labels will be redefined in 
+                                 Mapping A and Mapping B for the computation of 
+                                 the SC-IAT <em>D-score.</em> 
+                                 </li>
+                                  <li> <b> latency&#58; </b> It contains the
+                                 latencies of the responses expressed in
+                                 milliseconds.</li>
+                                 <li><b> correct&#58; </b> It contains the correct
+                                 and error responses to the SC-IAT. Correct responses
+                                 have to be coded as 1, error responses have to
+                                 be coded as 0. </li>
+                                 <li> <b> trials&#58; </b> The Template contains
+                                 a column named &#54;trials&#54;. If your 
+                                 administration prodcedure <b>DID NOT include</b>
+                                 a response time window, you can ignore this column
+                                 and delete it. Otherwise, if your adiminstration 
+                                 procedure <b>DID INCLUDE</b> a response time
+                                 window, this varaible must include the labels of all 
+                                 the administered trials. The label identifying 
+                                 the beyond response time window responses must be a
+                                 unique label, like &#34;alert&#34;.</li>
+                                 </ul>
                                  </blockquote>"
                              ),
                              fluidRow(column(
                                3,
-                               offset = 8
+                               offset = 8, 
+                               downloadButton("templateSciat", 
+                                              "Download SC-IAT CSV Template")
                              ))
                            )),
                            a(id = "det_works_sc", h3("How it works"), href = "#"),
@@ -1275,19 +1463,77 @@ ui <- fluidPage(
                              HTML(
                                "
                                 <blockquote>
-                               
+                               <p> The app is provided with a toy dataset 
+                               containing data from a Dark Chocolate SC-IAT. 
+                               If you check the &#34;SC-IAT example dataset&#34;
+                               box,  the data will be automatically loaded in 
+                               the server, and the <em>D-score</em> can be 
+                               computed. Otherwise, you can import your dataset 
+                               by following these instructions:
+                               <ul>
+                                <li> Use the <b>&#34;Browse&#34;</b> button
+                                to select your data. </li>
+                                <li> Select the labels for <b>Mapping A</b> and 
+                                <b>Mapping B</b> from the dropdown menu that will 
+                                be populated once you have uploaded the data 
+                                (either the toy dataset or your dataset).
+                                The dropdown menu for each of the two levels 
+                                defining the SC-IAT associative conditions will 
+                                display the labels in your dataset for 
+                               <strong>Mapping A</strong> and
+                                <strong>Mapping B</strong>.</li>
+                                <li> If your administration procedure included
+                                a response time window, check the &#34;Response 
+                                time window&#34; box. Once it is selected, the
+                                &#34;Label response time window&#34; box will 
+                                appear, in which you will have to write down the 
+                                lable identifying the beyond response time window 
+                                trials.</li>
+                                <li> Once the labels identifying
+                                the correct blocks are selected (and the label
+                                for the beyond response time window trials is 
+                                specified, if any), the 
+                                <b>&#34;Prepare data&#34;</b> button is 
+                                activated. Click on the <b>&#34;Prepare data&#34;</b> 
+                                button and wait for the alert 
+                                <b>&#34;Data are ready&#33;&#34;</b> to appear 
+                                right next to the button itself. <br>
+                                If there is something wrong with the block labels,
+                                an alert message will appear. In such cases,
+                                please check carefully the labels in your 
+                                dataframe and restart the app.</li>
+                                <li> At this point, data are ready for the
+                                computation of the SC-IAT <em>D-score</em></li>.
+                                </ul>
+                                </p> 
+                                <p>
+                                 The App can be resetted by clicking on the
+                                 <b> &#34;Reset &#38; Restart&#34;</b> button.
+                                 </p>
+                                 <ul>
+                                 <li>Once the data are ready for the computation, 
+                                  the <b>&#34;Compute &#38; Update&#34;</b> 
+                                  button is activated.</li>
+                                </br>When the <b>&#34;Compute &#38; Update&#34;</b>
+                                 button is clicked, the results appear in the
+                                 &#34;<em>D-score</em> results&#34; panel. </li>
+                                <li> If you want to delete trials execeeding
+                                a specific response time, check the &#34;Delete
+                                slow trials box&#34;. When you select this option, 
+                                the &#34;Time threshold&#34; box will appear, and 
+                                you can specify the time (in milliseconds) above
+                                which trials are deleted. </li>
+                                 <li> Everytime you make a change, remember to
+                                 click on the
+                                 <b>&#34;Compute &#38; Update&#34;</b>,
+                                 otherwise no changes will happen.</li>
+                                 <li>When you want to download your file, click
+                                 on the <b>&#34;Download&#34;</b> button.
+                                 For further information on the downloadable 
+                                 file, please read the <em>&#34;What you get 
+                                 section&#34;</em>.</li>
+                                 </ul>
                                 </blockquote>"
-                             ),
-                             HTML(
-                               "<blockquote>
-                                 
-                                 </blockquote>"
-                             ),
-                             
-                             HTML(
-                               " <blockquote>
-                                 
-                                 </blockquote>"
                              )
                            )),
                            a(id = "det_dpanel_sc", h3("The D-score results panel"), href = "#"),
@@ -1296,22 +1542,42 @@ ui <- fluidPage(
                              HTML(
                                "
                                  <blockquote>
-
-                                 
-                                 </blockquote>"
-                             )
-                           )),
-                           a(
-                             id = "det_descriptive_sc",
-                             h3("Descriptive statistics panel"),
-                             href = "#"
-                           ),
-                           shinyjs::hidden(div(
-                             id = "details_descriptive_sc",
-                             HTML(
-                               "
-                                 <blockquote>
-                                 
+                                 <ul>
+                                 <li> <b>SC-IAT <em>D-score</em>&#58;</b> 
+                                 Graphics display of the <em>D-score</em>s of the
+                                 participants, according to the specified
+                                 options. </li>
+                                 <li> <b> Point (Only for point graph)&#58;</b>
+                                 Click on a point of the graph: The participant's
+                                 <em>D-score</em> and ID corresponding to the point
+                                 will appear in the box. </li>
+                                 <li> <b> Area (for all the other graphic
+                                 display options)&#58;</b> Highlight an area of 
+                                 the graph: The SC-IAT <em>D-score</em>s and 
+                                 IDs of the Participants included in the 
+                                 selected area will appear in the box. </li>
+                                 <li> <b> Summary&#58;</b> Displays the summary
+                                 statistics (<em>Minimum, 1st quartile, Median,
+                                 Mean, 3rd quartile, Maximum</em>) of the
+                                 practice and test blocks <em>D</em>s, along
+                                 with the actual <em>D-score</em>. </li>
+                                 <li> <b> Trials &#60; 350 ms&#58;</b> Displays 
+                                 the number and percentage of trials with a 
+                                 latency under 350 ms, and that are hence 
+                                 discarded from the computation, according to 
+                                 Karpinski and Steinman (2006).</li>
+                                 <li> <b>Response time deletion&#58;</b> If 
+                                 you have selected the &#34;Delete slow trials&#34;
+                                 option, this box will display the number and the
+                                 percentage of trials deleted because they have
+                                 a latency higher than the threshold you set.</li> 
+                                 <li> <b>Beyond time trials&#58;</b> If your 
+                                 adiminstration procedure included a response 
+                                 time window and you specified the label of the 
+                                 trial exceeding it, this box will show the number 
+                                 and percentage of trials deleted because they 
+                                 are beyond the response time window.</li>
+                                 </ul>
                                  </blockquote>"
                              )
                            )),
@@ -1322,17 +1588,56 @@ ui <- fluidPage(
                                "
 
                                  <blockquote>
-                                 
+                                  <p>
+                                 The CSV you will obtain contains the following
+                                 information. Each column refers
+                                 to the observed values for each participant.
+                                 </p>
+
+                                 <ul>
+                                 <li><b>participant&#58;</b> Participants' IDs. </li>
+                                 <li><b>perc_fast&#58;</b> Percentage of fast 
+                                 responses (&#60; 350 ms). </li>
+                                 <li><b>tot_meanRT&#58;</b> Average response time 
+                                 across conditions.</li>
+                                 <li><b>MappingA_meanRT&#58;</b> Average response time 
+                                 in Mapping A.</li>
+                                 <li> <b>MappingB_meanRT&#58;</b> Average response 
+                                 time in Mapping B. </li>
+                                 <li><b>tot_accuracy&#58;</b> Percentage of correct
+                                 responses across conditions. </li>
+                                 <li><b>MappingA_accuracy&#58;</b>
+                                 Percentage of correct responses in Mapping A. </li>
+                                 <li><b>MappingB_accuracy&#58;</b>
+                                 Percentage of correct responses in Mapping B. </li>
+                                 <li><b>cond_ord&#58; </b>
+                                 Order of presentation of the two associative 
+                                 conditions, either <b>MappingA_First</b> or 
+                                 <b>MappingB_First</b>. </li>
+                                 <li><b>legendMappingA&#58;</b>
+                                 Label in the original dataset identifying Mapping 
+                                 A. </li>
+                                 <li><b>legendMappingB&#58;</b>
+                                 Label in the original dataset identifying Mapping
+                                 B.</li>
+                                 <li><b>p_correct_bpool.test&#58; </b>
+                                 Proportion of correct responses test blocks
+                                 (Mapping A + Mapping B).</li>
+                                 <li><b>dsciat&#58;</b> SC-IAT <em>D-score</em>.
+                                 </li>
+                                 </ul>
                                  </blockquote>"
                              )
                            ))), 
-          tabPanel(h4("D results"), 
+          # Results Panel SC-IAT -----
+          tabPanel(h4("D-Score results"), 
                    plotOutput("sc_distribution", 
                               click = clickOpts(id = "sc_plot1_click"),
                               brush = brushOpts(id = "sc_plot1_brush")), 
                    fluidRow(column(3, 
                                    offset = 9, 
-                                   downloadButton("down_plot_sc", "Download Plot"))), 
+                                   downloadButton("down_plot_sc", 
+                                                  "Download Plot"))), 
                    fluidRow(
                      conditionalPanel(
                        condition = "input.graph_sciat == '1'",
@@ -1380,20 +1685,7 @@ ui <- fluidPage(
                               verbatimTextOutput("perc_rt_delete")
                             ))
                    )
-                   ), 
-          tabPanel(
-            h4("Descriptive statisics"), 
-            
-            fluidRow(column(
-              10,
-              h5("Average response times"),
-              verbatimTextOutput("mean.block_sc")
-            )),
-            fluidRow(column(
-              10, h5("Accuracy"),
-              verbatimTextOutput("accuracy_block_sc")
-            ))
-            )
+                   )
         )
         )
       )

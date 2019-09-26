@@ -7,12 +7,18 @@ server <- function(input, output, session) {
   # toggle states SC-IAT
   observe({
     shinyjs::toggleState("sc_load", 
-                         !is.null(input$datafile) | input$example_sciat == T)
+                         !is.null(input$datafile_sc) | input$example_sciat == T)
   })
   
   observe({
     shinyjs::toggleState("downloadSciat", input$sc_update > 0)
   })
+  
+  observe({
+    shinyjs::toggleState("sc_update", input$sc_load >0)
+  })
+  
+  
   # toggle state for the update button (become active only when a D-score is selected)
   observe({
     shinyjs::toggleState("update", input$sel_d != 0)
@@ -56,33 +62,33 @@ server <- function(input, output, session) {
     })
   })
   # import data SC-IAT ----
-  # check whether you want to use the example sciat_datast
+  # check whether you want to use the example sciat_dataset
   dataentry_sciat <- observe({
     if (input$example_sciat == T){
-      sciat_datastInput <- reactive({
-        # sciat_datast <- read.csv("/srv/shiny-server/DscoreApp/raceAPP.csv")
-        sciat_datast <- read.csv("C:/Users/huawei/Dropbox/Implicit measures R packages/Dapp/sciatApp/singleSCIAT.csv")
+      sciat_datasetInput <- reactive({
+        # sciat_dataset <- read.csv("/srv/shiny-server/DscoreApp/raceAPP.csv")
+        sciat_dataset <- read.csv("~/GitHub/DscoreApp/singleSCIAT.csv")
       })
     } else {
       # Import data
-      sciat_datastInput <- reactive({
-        infile <- input$datafile
-        if (is.null(infile)) {
+      sciat_datasetInput <- reactive({
+        infile_sc <- input$datafile_sc
+        if (is.null(infile_sc)) {
           # User has not uploaded a file yet
           return(NULL)
         }
         isolate({
-          input$load
-          sciat_datast <- read.csv(infile$datapath)
+          input$sc_load
+          sciat_dataset <- read.csv(infile_sc$datapath)
         })
-        sciat_datast
+        sciat_dataset
       })
     }
     observe({
-      values$sciat_datast <- data.frame(sciat_datastInput())
+      values$sciat_dataset <- data.frame(sciat_datasetInput())
     })
     observe({
-      values$sciat_datast$block_label <- isolate(values$sciat_datast$block)
+      values$sciat_dataset$block_label <- isolate(values$sciat_dataset$block)
     })
   })
   # IAT labels ----
@@ -126,17 +132,17 @@ server <- function(input, output, session) {
   # SC-IAT labels ----
   # select variable MappingA practice block
   output$label_mapA_sciat1 <- renderUI({
-    labels.options <- unique(values$sciat_datast$block)
+    labels.options_sc <- unique(values$sciat_dataset$block)
     selectInput("mapA_sciat1", h5("e.g. CokeGood"), 
-                choices = labels.options,
-                labels.options[1])
+                choices = labels.options_sc,
+                labels.options_sc[1])
   })  
   # select variable MappingA test block
   output$label_mapB_sciat1 <- renderUI({
-    labels.options <- unique(values$sciat_datast$block)
+    labels.options_sc <- unique(values$sciat_dataset$block)
     selectInput("mapB_sciat1", h5("e.g. CokeBad"), 
-                choices = labels.options,
-                labels.options[2] )
+                choices = labels.options_sc,
+                labels.options_sc[2] )
   })
   ### labels check IAT ----
   labels_check<- observeEvent(
@@ -144,10 +150,12 @@ server <- function(input, output, session) {
     {
       # check whether there are more blocks labels than expected 
       if (length(unique(values$dataset$block_label)) > 4){
-        alert <- "There are more blocks than expected. Remove the extra blocks and restart the app." 
+        alert <- "There are more blocks than expected. Remove the extra blocks 
+        and restart the app." 
         values$alert <- "restart" # create and save an alert
       }
-      # if the number of blocks labels is correct, check whether users tried to select the same label for two blocks
+      # if the number of blocks labels is correct, check whether users tried 
+      # to select the same label for two blocks
       # if they did, an alert is created and saved
       else if(input$mapA_practice == input$mapA_test){
         alert <- "check your labels and restart the app!"
@@ -176,7 +184,7 @@ server <- function(input, output, session) {
       else{
         return()
       }
-      # if at least one the previous conditions is true, an alert is displayed 
+      # if at least one of the previous conditions is true, an alert is displayed 
       shinyjs::alert(alert)
     }
   )
@@ -186,27 +194,25 @@ server <- function(input, output, session) {
   labels_check_sc <- observeEvent(
     input$sc_load,
     {
-      labels <- unique(values$sciat_datast$block)
+      labels <- unique(values$sciat_dataset$block)
       if (length(labels) > 2){
-        alert_sc <- "There are too many blocks/labels!"
-        values$alert <- "restart"
+        sc_alert <- "There are too many blocks/labels!"
+        values$sc_alert <- "restart"
       } else if(input$mapA_sciat1 == input$mapB_sciat1){
-        alert_sc <- "Check your labels and restart the app!"
-        values$alert <- "restart"
+        sc_alert <- "Check your labels and restart the app!"
+        values$sc_alert <- "restart"
       } else {
         return()
       }
-      
-      
-      shinyjs::alert(alert_sc)
-      
+      shinyjs::alert(sc_alert)
     })
   
   # Prepare the dataframe for the D-score computation IAT ----
   newentry <- observeEvent(
     input$load,
     {
-      # rename blocks labels in MappingA and MappingB to create the IAT conditions variable
+      # rename blocks labels in MappingA and MappingB to create the IAT 
+      # conditions variable
       values$dataset$Condition <- as.character(values$dataset$block)
       values$dataset$Condition <- with(values$dataset,
                                        ifelse(block == input$mapA_practice |
@@ -252,11 +258,11 @@ server <- function(input, output, session) {
       # needed for the computation of the pooled sd
       values$dataset$block_pool <- with(values$dataset,
                                         ifelse(block == input$mapA_practice |
-                                                 block == input$mapB_practice, 
-                                               "practice",
+                                              block == input$mapB_practice, 
+                                                        "practice",
                                                ifelse(
-                                                 block == input$mapA_test |
-                                                   block == input$mapB_test, 
+                                               block == input$mapA_test |
+                                               block == input$mapB_test, 
                                                  "test",
                                                  "error"
                                                )))
@@ -332,9 +338,15 @@ server <- function(input, output, session) {
                               by = "participant")
       # create variable for the output of total number of slow responses
       values$slow <- values$dataset[values$dataset$slow %in% "no", ]
+      if (nrow(values$slow) !=0) {
+        values$slow_perc <- round((nrow(values$slow) / nrow(values$dataset)) * 100, 
+                                  2)
+      }
+      
       # create a varible for telling whether data are ready
       values$ready <- values$dataset[values$dataset$slow %in% "yes", ]
-      # compute proportion of correct responses for each participant in each condition
+      # compute proportion of correct responses for each participant in each 
+      # condition
       values$correct_response <- with(values$dataset,
                                       aggregate(correct, 
                                                 by = list(Condition, participant),
@@ -349,7 +361,8 @@ server <- function(input, output, session) {
       # calculate the proportion of error responses (error_cond)
       values$correct_response$error_cond <- with(values$correct_response,
                                                  1 - prop_correct_cond)
-      # merge original dataframe with the proportion of error responses to create the filter variable
+      # merge original dataframe with the proportion of error responses to 
+      # create the filter variable
       values$dataset <- merge(values$dataset, values$correct_response,
                               by = c("participant", "Condition"))
       # compute proportion of correct responses for each participant in each block
@@ -364,7 +377,8 @@ server <- function(input, output, session) {
                                             idvar = "participant", 
                                             timevar = "block",
                                             direction = "wide")
-      # compute proportion of correct responses for each participant in each block_pool (practice vs test)
+      # compute proportion of correct responses for each participant in each 
+      # block_pool (practice vs test)
       values$accuracy_block_pool <- with(values$dataset,
                                          aggregate(correct, 
                                                    by = list(participant, 
@@ -386,7 +400,8 @@ server <- function(input, output, session) {
       values$accuracy <- merge(values$accuracy_block_wide,
                                values$accuracy_block_pool_wide, 
                                by = "participant")
-      # merge overall accuracy with correct_response_wide (proportion of correct responses in each condition)
+      # merge overall accuracy with correct_response_wide 
+      # (proportion of correct responses in each condition)
       values$accuracy <- merge(values$accuracy, 
                                values$correct_response_wide, 
                                by = "participant")
@@ -408,7 +423,8 @@ server <- function(input, output, session) {
                                             FUN = mean))
       
       colnames(values$subject_mean) <- c("participant", "mean.tot")
-      # merge the time dataset (containing the information on fast and slow responses) with the overall average response time
+      # merge the time dataset (containing the information on fast and slow 
+      # responses) with the overall average response time
       values$time <- merge(values$time, values$subject_mean,
                            by = "participant")
       values$time <- merge(values$time, values$accuracy, 
@@ -430,36 +446,54 @@ server <- function(input, output, session) {
   newentry_sciat <- observeEvent(
     input$sc_load,
     {
-      values$sc_final_data <- data.frame(participant = unique(values$sciat_datast$participant))
+      values$sc_final_data <- data.frame(participant = 
+                                        unique(values$sciat_dataset$participant))
       # check for the alert trials 
-      if (input$window_check == T & input$label_window == ""){
-        values$alert <- "restart"
-        shinyjs::alert("You haven't specified the label for the trials exceeding the response time window!")
+      if (input$window_check == TRUE & 
+          any(colnames(values$sciat_dataset) == "trial") == FALSE) {
+        values$sc_alert <- "restart" 
+        shinyjs::alert("Can't find the column with the trials labels!")
+      } else if (input$window_check == TRUE & input$label_window == ""){
+        values$sc_alert <- "restart"
+        shinyjs::alert("You haven't specified the label for the trials 
+                       exceeding the response time window!")
         
-      } else if (input$window_check == T & any(values$sciat_datast$trial == input$label_window) == F) {
-        values$alert <- "restart"
+      } else if (input$window_check == TRUE & 
+                 any(values$sciat_dataset$trial == input$label_window) == FALSE) {
+        values$sc_alert <- "restart"
         shinyjs::alert("Are you sure you spelled the label correctly?")
       } else if (input$window_check == T) {
         # count the number of discarded trials BEFORE taking them out
-        values$tot_window <- round((sum(values$sciat_datast$trial == input$label_window)/nrow(values$sciat_datast))*100, 2)
-        values$sbj_window <- data.frame(with(values$sciat_datast, 
-                                             table(participant, trial == input$label_window )))
-        values$sbj_window <- reshape(values$sbj_window, idvar = "participant", 
-                                     timevar = "Var2", direction = "wide")
+        values$tot_window <- round((
+          sum(values$sciat_dataset$trial == input$label_window) / 
+            nrow(values$sciat_dataset)) * 100, 2)
+        values$tot_window <- c("number" = 
+                                 sum(values$sciat_dataset$trial == input$label_window),
+                               "percentage" = values$tot_window)
+        values$sbj_window <- data.frame(with(values$sciat_dataset, 
+                                             table(participant, 
+                                                   trial == input$label_window)))
+        values$sbj_window <- reshape(values$sbj_window, 
+                                     idvar = "participant", 
+                                     timevar = "Var2", 
+                                     direction = "wide")
         values$sbj_window$perc_window <- with(values$sbj_window,
-                                              round((Freq.TRUE/(Freq.FALSE + Freq.TRUE))*100, 2))
+                                              round((Freq.TRUE / (Freq.FALSE + 
+                                                                    Freq.TRUE)) 
+                                                    * 100, 2))
         values$sbj_window <- values$sbj_window[, c(1,4)]
         values$sc_final_data <- merge(values$sc_final_data, 
                                       values$sbj_window, 
                                       by = "participant")
-        values$sciat_datast <- values$sciat_datast[!values$sciat_datast$trial %in% input$label_window, ]
+        values$sciat_dataset <- values$sciat_dataset[!values$sciat_dataset$trial 
+                                                     %in% input$label_window, ]
       } else if (input$window_check == F) {
-        values$sciat_datast <- values$sciat_datast
+        values$sciat_dataset <- values$sciat_dataset
       }
       # rename levels of condition in MappingA and MappingB
-      values$sciat_datast$Condition <- as.character(values$sciat_datast$block)
+      values$sciat_dataset$Condition <- as.character(values$sciat_dataset$block)
       
-      values$sciat_datast$Condition <- with(values$sciat_datast,
+      values$sciat_dataset$Condition <- with(values$sciat_dataset,
                                             ifelse(block == input$mapA_sciat1,
                                                    "MappingA",
                                                    ifelse(
@@ -468,15 +502,16 @@ server <- function(input, output, session) {
                                                      "error")))
       # order of presentation
       
-      values$condition_order_sc <- with(values$sciat_datast,
-                                        aggregate(Condition, by = list(participant), 
+      values$condition_order_sc <- with(values$sciat_dataset,
+                                        aggregate(Condition, 
+                                                  by = list(participant), 
                                                   FUN = unique))
       colnames(values$condition_order_sc) <- c("participant", "order")
-      values$condition_order_sc$cond_ord <- paste(values$condition_order_sc$order[,1],
-                                                  values$condition_order_sc$order[,2],
-                                                  sep = "_") 
-      values$condition_order_sc <- values$condition_order_sc[, 
-                                                             c("participant", 
+      values$condition_order_sc$cond_ord <- paste(
+        values$condition_order_sc$order[,1],
+        values$condition_order_sc$order[,2],
+        sep = "_") 
+      values$condition_order_sc <- values$condition_order_sc[, c("participant", 
                                                                "cond_ord")]
       values$condition_order_sc$cond_ord <- with(values$condition_order_sc,
                                                  ifelse(
@@ -488,7 +523,7 @@ server <- function(input, output, session) {
       values$condition_order_sc$legendMappingB <- input$mapB_sciat1
       
       # compute the percentage of fast responses for each participant
-      values$fast350_sc <- data.frame(with(values$sciat_datast, 
+      values$fast350_sc <- data.frame(with(values$sciat_dataset, 
                                            table(participant, latency < 350)))
       values$fast350_sc <- reshape(values$fast350_sc, 
                                    idvar = "participant", 
@@ -498,14 +533,18 @@ server <- function(input, output, session) {
       values$fast350_sc$perc_fast <- with(values$fast350_sc, 
                                           round((Freq.TRUE/(Freq.FALSE + Freq.TRUE))*100, 2))
       values$perc_tot_fast <- with(values$fast350_sc, 
-                                   round(sum(Freq.TRUE)/(sum(Freq.FALSE) + sum(Freq.TRUE))*100, 2))
+                                   round(sum(Freq.TRUE)/(sum(Freq.FALSE) + 
+                                                           sum(Freq.TRUE)) 
+                                         * 100, 2))
+      values$perc_tot_fast <- c("number" = sum(values$fast350_sc$Freq.TRUE), 
+                                "percentage" = values$perc_tot_fast)
       values$fast350_sc <- values$fast350_sc[, c("participant", "perc_fast")]
       
       # take out fast responses 
-      values$sciat_datast$outfast <- with(values$sciat_datast, 
+      values$sciat_dataset$outfast <- with(values$sciat_dataset, 
                                           ifelse(latency < 350, 
                                                  "out", "keep"))
-      values$sciat_datast <- values$sciat_datast[values$sciat_datast$outfast %in% "keep", ]
+      values$sciat_dataset <- values$sciat_dataset[values$sciat_dataset$outfast %in% "keep", ]
       
       values$sc_ready <- "ready"
       
@@ -529,15 +568,13 @@ server <- function(input, output, session) {
   observe({
     shinyjs::toggleState("sel_d", !(is.null(values$ready)))
   })
-  # toggle state for the Accuracy deletion option (become active only when a D-score is selected)
+  # toggle state for the Accuracy deletion option (become active only when a
+  # D-score is selected)
   observe({
     shinyjs::toggleState("accuracy_del", input$sel_d != 0 )
   })
-  # toggle state for the Accuracy deletion percentage option (become active only when a D-score is selected
-  observe({
-    shinyjs::toggleState("accuracy_del", input$sel_d != 0 )
-  })
-  # toggle state for the Fast participants deletion option (become active only when a D-score is selected
+  # toggle state for the Fast participants deletion option (become active only 
+  # when a D-score is selected
   observe({
     shinyjs::toggleState("sbjFast_del", input$sel_d != 0 )
   })
@@ -546,8 +583,9 @@ server <- function(input, output, session) {
   cleandata <- observeEvent(
     input$update, 
     {
-      # Compute the D-score according to the specific algorithm selected by the users
-      if(input$sel_d == 1){
+      # Compute the D-score according to the specific algorithm selected by the 
+      # users
+      if (input$sel_d == 1){
         # d1: built in, no lower tail treatment
         values$out_400 <- "Not expected for this D"
         values$d1 <- values$dataset
@@ -555,17 +593,18 @@ server <- function(input, output, session) {
         values$d1$latency_cor <- values$d1$latency
         values$data <- values$d1
         values$d_select <- 1
-      } 
-      else if(input$sel_d == 2){
+      } else if (input$sel_d == 2){
         # d2: built in, lower tail treatment 400ms
-        values$out_400 <- sum(values$dataset$fast400 == "no", na.rm = T)
+        values$out_400 <- sum(values$dataset$fast400 == "no")
+        values$out_400 <- c("number" = values$out_400, 
+                            "percentage" = 
+                              round(values$out_400 / nrow(values$dataset) * 100, 2))
         values$d2 <- values$dataset[values$dataset$fast400 %in% "yes", ]
         # create the variable latency_cor for the computatiopn of the D-score
         values$d2$latency_cor <- values$d2$latency
         values$data <- values$d2
         values$d_select <- 2
-      } 
-      else if(input$sel_d == 3){
+      } else if (input$sel_d == 3){
         values$out_400 <- "Not expected for this D"
         # d3: no built in, no lower tail treatment, error = mean + 2*sd
         values$d3 <- values$dataset
@@ -598,8 +637,7 @@ server <- function(input, output, session) {
                                              sd_penalty, latency))
         values$data <- values$d3
         values$d_select <- 3
-      } 
-      else if(input$sel_d == 4) {
+      } else if (input$sel_d == 4) {
         values$out_400 <- "Not expected for this D"
         # d4: no built in, no lower tail treatment, error = mean + 600
         values$d4 <- values$dataset 
@@ -622,10 +660,12 @@ server <- function(input, output, session) {
         values$data <- values$d4
         values$d_select <- 4
         
-      } 
-      else if(input$sel_d == 5){
+      } else if(input$sel_d == 5){
         #d5: no built in, lower tail treatment, error = mean + 2*sd
-        values$out_400 <- sum(values$dataset$fast400 == "no", na.rm = T)
+        values$out_400 <- sum(values$dataset$fast400 == "no")
+        values$out_400 <- c("number" = values$out_400, 
+                            "percentage" = 
+                              round(values$out_400 / nrow(values$dataset) * 100, 2))
         values$d5 <- values$dataset[values$dataset$fast400 %in% "yes", ]
         
         # Compute the mean on the correct responses for the error correction
@@ -652,10 +692,12 @@ server <- function(input, output, session) {
                                       ifelse(correct == 0, sd_penalty, latency))
         values$data <- values$d5
         values$d_select <- 5
-      } 
-      else if (input$sel_d == 6){
+      } else if (input$sel_d == 6){
         # d6: no builtin, lower tail treatment, error = mean + 600
-        values$out_400 <- sum(values$dataset$fast400 == "no", na.rm = T)
+        values$out_400 <- sum(values$dataset$fast400 == "no")
+        values$out_400 <- c("number" = values$out_400, 
+                            "percentage" = 
+                              round(values$out_400 / nrow(values$dataset) * 100, 2))
         values$d6 <- values$dataset[values$dataset$fast400 %in% "yes", ]
         
         # Compute the mean on the correct responses for the error correction
@@ -723,52 +765,67 @@ server <- function(input, output, session) {
                                           "variance_test", 
                                           "mean_test_MappingB", 
                                           "mean_practice_MappingB")
-      # compute the difference in the average response time for the practice bloks of the two mappings
+      # compute the difference in the average response time for the practice 
+      # blocks of the two mappings
       values$sbj_data_wide$diff_practice <- with(values$sbj_data_wide,
                                                  mean_practice_MappingB - 
                                                    mean_practice_MappingA)
-      # compute the difference in the average response time for the tests bloks of the two mappings
+      # compute the difference in the average response time for the tests bloks 
+      # of the two mappings
       values$sbj_data_wide$diff_test <- with(values$sbj_data_wide,
                                              mean_test_MappingB - 
-                                               mean_test_MappingA)
+                                             mean_test_MappingA)
       # compute the D-score for the practice blocks 
       values$sbj_data_wide$d_practice <- with(values$sbj_data_wide,
-                                              diff_practice/sqrt(variance_practice))
+                                              diff_practice / 
+                                                sqrt(variance_practice))
       # compute the D-score for the test blocks 
       values$sbj_data_wide$d_test <- with(values$sbj_data_wide,
-                                          diff_test/sqrt(variance_test))
+                                          diff_test / sqrt(variance_test))
       # compute the D-score as the mean between the practice and test D-score
       values$sbj_data_wide$dscore <- with(values$sbj_data_wide,
                                           (rowSums(
-                                            values$sbj_data_wide[,c("d_practice", 
-                                                                    "d_test")]))/2)
+                                            values$sbj_data_wide[, 
+                                                                 c("d_practice", 
+                                                                    "d_test")])) 
+                                          / 2)
       # select only useful columns
       values$dframe <- values$sbj_data_wide[, c("participant", "d_practice", 
                                                 "d_test", "dscore")]
-      # merge the dataset containing the D-score with the dataset containing the details on participants performance
-      values$descript_data <- merge(values$time, values$dframe,
+      # merge the dataset containing the D-score with the dataset containing 
+      # the details on participants performance
+      values$descript_data <- merge(values$time, 
+                                    values$dframe,
                                     by = "participant")
-      # merge the descript_data dataset with the dataset containing the order of presentation of the blocks
+      # merge the descript_data dataset with the dataset containing the order 
+      # of presentation of the blocks
       values$descript_data <- merge(values$descript_data, 
                                     values$condition_order)
-      # specificy which D-score was compute by pasting the number of the D-score to the d_practice, d_test and d_score variables
+      # specificy which D-score was compute by pasting the number of the D-score 
+      # to the d_practice, d_test and d_score variables
       colnames(values$descript_data)[16:18] <- paste(colnames(
         values$descript_data)[16:18], input$sel_d, sep = "_")
       # compute the accuracy based on the percentage enetered by the users
       values$dataset$test_acc <- with(values$dataset,
                                       ifelse(values$dataset$error_cond > 
-                                               input$perc_error/100,
+                                               input$perc_error / 100,
                                              "out", "keep"))
-      # create a dataframe containing the IDs of the partciipants to eliminate based on the accuracy deletion
+      # create a dataframe containing the IDs of the partciipants to eliminate 
+      # based on the accuracy deletion
       values$sbj_accuracy <- values$dataset[values$dataset$test_acc %in% "out", ]
-      # create a dataframe containing the IDs of the participants to eliminate based on fast responses
+      # create a dataframe containing the IDs of the participants to 
+      # eliminate based on fast responses
       values$sbj_time <- values$dataset[values$dataset$out_fast %in% "out", ]
-      # merge together partcipants filter variables for both accuracy and time deletion
+      # merge together partcipants filter variables for both accuracy and 
+      # time deletion
       values$out_participants <- c(values$sbj_accuracy$participant, 
                                    values$sbj_time$participant)
-      # create teh condition for displaying the participants according to users' display configurations
-      if(input$accuracy_del == 1 & input$sbjFast_del == 1){ # Display all participants
-        # save the dataset with the results in a temporary dataframe values$display
+      # create teh condition for displaying the participants according to 
+      # users' display configurations
+      if (input$accuracy_del == 1 & input$sbjFast_del == 1){ 
+        # Display all participants
+        # save the dataset with the results in a temporary dataframe 
+        # (values$display)
         values$display <- values$dframe
         # compute the reliability only on the selected participants
         values$test_practice_rel <- cor(values$display[, c("d_practice", 
@@ -777,41 +834,52 @@ server <- function(input, output, session) {
         values$desc_stats <- values$data[values$data$participant %in% 
                                            values$display$participant, ]
         
-      } else if(input$accuracy_del == 2 & input$sbjFast_del == 1){ # Accuracy deletion only
+      } else if (input$accuracy_del == 2 & input$sbjFast_del == 1){ 
+        # Accuracy deletion only
         values$display <- values$dframe[!(values$dframe$participant) %in%
                                           values$sbj_accuracy$participant, ]
         
         values$out_400d <- values$dataset[!(values$dataset$participant) %in%
                                             values$sbj_accuracy$participant, ]
         
-        values$out_400 <- sum(values$out_400d$fast400 == "no", na.rm = T)
+        values$out_400 <- sum(values$out_400d$fast400 == "no")
+        values$out_400 <- c("number" = values$out_400, 
+                            "percentage" = 
+                              round(values$out_400 / nrow(values$dataset) * 100, 2))
         
         values$test_practice_rel <- cor(values$display[, c("d_practice", 
                                                            "d_test")])
         values$desc_stats <- values$data[values$data$participant %in% 
                                            values$display$participant, ]
-      } else if (input$accuracy_del == 1 & input$sbjFast_del == 2){ # Fast participants deletion only
+      } else if (input$accuracy_del == 1 & input$sbjFast_del == 2) { 
+        # Fast participants deletion only
         values$display <- values$dframe[!(values$dframe$participant) %in%
                                           values$sbj_time$participant, ]
         
         values$out_400d <-  values$dataset[!(values$dataset$participant) %in%
                                              values$sbj_time$participant, ]
         
-        values$out_400 <- sum(values$out_400d$fast400 == "no", na.rm = T)
+        values$out_400 <- sum(values$out_400d$fast400 == "no")
+        values$out_400 <- c("number" = values$out_400, 
+                            "percentage" = 
+                              round(values$out_400 / nrow(values$dataset) * 100, 2))
         
         values$test_practice_rel <- cor(values$display[, c("d_practice", 
                                                            "d_test")])
         values$desc_stats <- values$data[values$data$participant %in% 
                                            values$display$participant, ]
-      } 
-      else if(input$accuracy_del == 2 & input$sbjFast_del == 2){ # Both accuracy and fast participants deletion
+      } else if (input$accuracy_del == 2 & input$sbjFast_del == 2){ 
+        # Both accuracy and fast participants deletion
         values$display <- values$dframe[!(values$dframe$participant) %in%
                                           values$out_participants, ]
         
         values$out_400d <- values$dataset[!(values$dataset$participant) %in%
                                             values$out_participants, ]
         
-        values$out_400 <- sum(values$out_400d$fast400 == "no", na.rm = T)
+        values$out_400 <- sum(values$out_400d$fast400 == "no")
+        values$out_400 <- c("number" = values$out_400, 
+                            "percentage" = 
+                              round(values$out_400 / nrow(values$dataset) * 100, 2))
         
         values$test_practice_rel <- cor(values$display[, c("d_practice", 
                                                            "d_test")])
@@ -828,30 +896,40 @@ server <- function(input, output, session) {
       }
       
     })
-  # compute the D sc-IAT ----
+  # compute the D-score for the SC-IAT ----
   computeD <- observeEvent(
     input$sc_update, 
     {
       # eliminate fast responses, if selected
-      if (input$slow_del_sc == T){
-        values$sciat_datast$filter_time <- ifelse(values$sciat_datast$latency > input$time_slow, 
+      if (input$slow_del_sc == TRUE) {
+        values$sciat_dataset$filter_time <- ifelse(values$sciat_dataset$latency 
+                                                   > input$time_slow, 
                                                   "out", "keep") 
-        values$out_filter_sc <- round((sum(values$sciat_datast$filter_time == "out")/nrow(values$sciat_datast))*100,2)
-        values$sbj_filter_sc <- data.frame(with(values$sciat_datast, 
+        values$out_filter_sc <- round((sum(values$sciat_dataset$filter_time == 
+                                             "out") / nrow(values$sciat_dataset)) 
+                                      * 100, 2)
+        values$out_filter_sc <- c("number" = 
+                                   round(sum(values$sciat_dataset$filter_time == "out")),
+         "percentage" = values$out_filter_sc)
+        values$sbj_filter_sc <- data.frame(with(values$sciat_dataset, 
                                                 table(participant, 
                                                       filter_time == "out")))
         values$sbj_filter_sc <- reshape(values$sbj_filter_sc, 
-                                        idvar = "participant", timevar = "Var2", 
+                                        idvar = "participant", 
+                                        timevar = "Var2", 
                                         direction = "wide")
         values$sbj_filter_sc$perc_filter <- with(values$sbj_filter_sc, 
-                                                 round((Freq.TRUE/(Freq.FALSE + Freq.TRUE))*100, 2))
-        values$sbj_filter_sc <- values$sbj_filter_sc[, c("participant", "perc_filter")]
+                                                 round((Freq.TRUE / (Freq.FALSE 
+                                                      + Freq.TRUE)) * 100, 2))
+        values$sbj_filter_sc <- values$sbj_filter_sc[, c("participant", 
+                                                         "perc_filter")]
         # values$sc_final_data <- merge(values$sc_final_data, 
         #                            values$sbj_filter_sc, 
         #                            by = "participant")
-        values$sciat <- values$sciat_datast[values$sciat_datast$filter_time %in% "keep", ]
+        values$sciat <- values$sciat_dataset[values$sciat_dataset$filter_time 
+                                             %in% "keep", ]
       } else{
-        values$sciat <- values$sciat_datast
+        values$sciat <- values$sciat_dataset
       }
       
       # compute the percentage of error for each participant 
@@ -907,33 +985,35 @@ server <- function(input, output, session) {
       values$sc_final_data <- merge(values$sc_final_data, 
                                     values$condition_order_sc, 
                                     by = "participant")
-      #### compute D sciat
+      # compute D-score sciat ----
       # take out correct responses
       values$correct_sc <- values$sciat[values$sciat$correct == 1, ]
       
-      # calcolo la deviazione standard solo per le risposte corrette across conditions
+      # calcolo la deviazione standard solo per le risposte corrette across 
+      # conditions
       values$sd_correct_sc <- aggregate(latency ~ participant, 
                                         data = values$correct_sc, sd)
       colnames(values$sd_correct_sc)[2] <- "sd_correct"
       
-      # merge mean response time for each participant in each condition to the original 
-      # dataframe 
+      # merge mean response time for each participant in each condition to the 
+      # original dataframe 
       colnames(values$mean_cond_sc)[3] <- "mean_lat"
       values$sciat <- merge(values$sciat, values$mean_cond_sc, 
                             by = c("participant", "Condition"))
       
-      # # merge the original dataframe with the sd computed on the correct latencies
+      # merge the original dataframe with the sd computed on the correct 
+      # latencies
       values$sciat <- merge(values$sciat,
                             values$sd_correct_sc,
                             by = "participant")
       
-      # # replace error responses with the mean plus 400 ms penalty
+      # replace error responses with the mean plus 400 ms penalty
       values$sciat$latency_cor <- with(values$sciat,
                                        ifelse(correct == 0,
                                               mean_lat + 400,
                                               latency))
-      # # compute the mean response time in each condition on the corrected latencies 
-      # 
+      # compute the mean response time in each condition on the corrected 
+      # latencies 
       values$mean_correct_sc <- aggregate(latency_cor ~ participant + Condition,
                                           data = values$sciat,
                                           mean)
@@ -954,7 +1034,6 @@ server <- function(input, output, session) {
       
       values$calc_d$dsciat <- with(values$calc_d,
                                    diff/sd_correct)
-      
       
     })
   
@@ -1056,9 +1135,6 @@ server <- function(input, output, session) {
   shinyjs::onclick("hist_det",
                    shinyjs::toggle(id = "details_histogram", anim = TRUE))
   
-  shinyjs::onclick("hist_det1",
-                   shinyjs::toggle(id = "details_histogram1", anim = TRUE))
-  
   shinyjs::onclick("accuracy_det",
                    shinyjs::toggle(id = "details_accuracy", anim = TRUE))
   
@@ -1067,24 +1143,42 @@ server <- function(input, output, session) {
   
   shinyjs::onclick("percentage_det1",
                    shinyjs::toggle(id = "details_perc1", anim = TRUE))
-  # pop uo menus SC-IAT ----
+  
+  # pop up menus SC-IAT ----
   # menu
   
   shinyjs::onclick("sc_exampledata",
                    shinyjs::toggle(id = "details_scdata", anim = TRUE))
+  
   shinyjs::onclick("info_window",
                    shinyjs::toggle(id = "details_window", anim = TRUE))
+  
   shinyjs::onclick("info_windowlabel",
                    shinyjs::toggle(id = "details_windowlabel", anim = TRUE))
+  
   shinyjs::onclick("info_mapAsciat1",
                    shinyjs::toggle(id = "details_mapAsciat1", anim = TRUE))
+  
   shinyjs::onclick("info_mapBsciat1",
                    shinyjs::toggle(id = "details_mapBsciat1", anim = TRUE))
+  
   shinyjs::onclick("info_comprel",
                    shinyjs::toggle(id = "details_comprel", anim = TRUE))
+  
   shinyjs::onclick("sc_graph_det",
                    shinyjs::toggle(id = "sc_details_graph", anim = TRUE))
   
+  shinyjs::onclick("impsc_det", 
+                   shinyjs::toggle(id = "details_scimport", anim = TRUE))
+  
+  shinyjs::onclick("info_scprepare", 
+                   shinyjs::toggle(id = "details_scprepare", anim = TRUE))
+  
+  shinyjs::onclick("hist_sc", 
+                   shinyjs::toggle(id = "sc_histogram", anim = TRUE))
+  
+  shinyjs::onclick("info_timeslow_sc", 
+                   shinyjs::toggle(id = "details_timeslow_sc", anim = TRUE))
   
   
   # DSCORE output ----
@@ -1121,7 +1215,11 @@ server <- function(input, output, session) {
     dataset <- values$slow
     sum_slow <- nrow(dataset)
     # If there aren't slow trials, the "None" label is displayed
-    ifelse(sum_slow != 0, sum_slow, "None" )
+    if (sum_slow !=0) {
+      return(c("number" = sum_slow, "percentage" = values$slow_perc))
+    } else {
+      return("None")
+    }
   })
   
   # Number of fast trials ####
@@ -1140,7 +1238,13 @@ server <- function(input, output, session) {
     
     out_400 <- values$out_400
     # If there aren't fast trials, the "None" label is displayed
-    ifelse(out_400 == 0, "None", out_400)
+    if (is.character(out_400) == TRUE){
+      return(out_400)
+    } else if (out_400[1] == 0){
+      return("None")
+    } else {
+      return(out_400)
+    }
   })
   
   # Number of participants deleted for the accuracy deletion ####
@@ -1158,10 +1262,15 @@ server <- function(input, output, session) {
     }
     
     dataset <- values$sbj_accuracy
-    num <- length(unique(dataset$participant))
+    num <- c("number" = length(unique(dataset$participant)), 
+             "percentage" = round((length(unique(dataset$participant)) / 
+               length(unique(values$dataset$participant))) * 100, 2))
     # If there aren't inaccurate participants, the "None" label is displayed
-    ifelse(nrow(dataset) == 0, "None", num)
-    
+    if (nrow(dataset) == 0){
+      return("None")
+    } else {
+      return(num)
+    }
   })
   
   ## fast participants ##########
@@ -1180,8 +1289,15 @@ server <- function(input, output, session) {
     
     sbj_fast <- values$sbj_time
     # If there aren't too fast participants, the "None" label is displayed
-    ifelse(nrow(sbj_fast) == 0, "None", 
-           length(unique(sbj_fast$participant)))
+    num_fast <- c("number" = length(unique(sbj_fast$participant)), 
+                  "percentage" = 
+                   round((length(unique(sbj_fast$participant)) / 
+                      length(unique(values$dataset$participant))) * 100 , 2))
+    if (nrow(sbj_fast) == 0){
+      return("None")
+    } else {
+      return(num_fast)
+    }
   })
   
   # Graphic displays IAT ####
@@ -1317,7 +1433,13 @@ server <- function(input, output, session) {
       
       # graph specifications common to all the point graphs
       g_graph <- g_graph  + theme_classic()
-      g_graph <- g_graph + theme(axis.text.x = element_text(size = 5))
+      if (nrow(dframe) > 70){
+        g_graph <- g_graph + theme(
+          axis.text.x = element_blank())
+      } else {
+        g_graph <- g_graph + theme(axis.text.x = element_text(size = 5))
+      }
+      
       g_graph <- g_graph + geom_abline(slope = 0, intercept = 0.15,
                                        col = "royalblue",lty = 2, size = .50)
       g_graph <- g_graph + geom_abline(slope = 0, intercept = -0.15,
@@ -1376,9 +1498,7 @@ server <- function(input, output, session) {
       g_graph <- g_graph + xlab("D-score") + theme(axis.title.y = element_blank())
       stop_time <- Sys.time() # it's needed for computing the waiting time for the shiny notification
       
-    }
-    # density ####
-    else if(input$graph == 3){
+    } else if(input$graph == 3){ # density ####
       # Density graph
       values$type_graph <- "Density"
       start_time <- Sys.time() # it's needed for computing the waiting time for the shiny notification
@@ -1418,15 +1538,13 @@ server <- function(input, output, session) {
                                     col = "slateblue4" )
       g_graph <- g_graph + xlab("D-score") + theme(axis.title.y = element_blank())
       stop_time <- Sys.time() # it's needed for computing the waiting time for the shiny notification
-    }
-    # density + histogram #####
-    else if(input$graph == 4){
+    } else if (input$graph == 4){  # density + histogram #####
       # density + histogram graph
       values$type_graph <- "HistDens"
       start_time <- Sys.time() # it's needed for computing the waiting time for the shiny notification
       g_graph <- ggplot(dframe,
                         aes(x = dscore)) +
-        geom_histogram(aes(y=..density..), bins = input$num.bin1, # number of bins depends on users' configuration
+        geom_histogram(aes(y=..density..), bins = input$num.bin, # number of bins depends on users' configuration
                        col = "royalblue",
                        fill = "royalblue", alpha = .50)
       g_graph <- g_graph  + theme_classic()
@@ -1508,31 +1626,31 @@ server <- function(input, output, session) {
         d$dsciat_cres <- d$participant
         d$dsciat_cres <- as.factor(d$dsciat_cres)
         coordinates_labels <- ifelse(length(unique(d$participant)) < 150, 
-                                     nrow(d)-1, 
-                                     nrow(d)-10)
+                                     nrow(d) - 1, 
+                                     nrow(d) - 10)
         sc_graph <- ggplot(d,
                            aes(y = dsciat, x = dsciat_cres)) +
           geom_point(col = "springgreen4",  size = 2)
         sc_graph <- sc_graph + scale_x_discrete(name = "Participant",
                                                 labels = d$participant)
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.21, label= "slight",
-                                        col = "royalblue" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.21, label= "slight",
-                                        col = "royalblue" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.40, label= "moderate",
-                                        col = "orchid3" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.41, label= "moderate",
-                                        col = "orchid3" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.70, label= "strong",
-                                        col = "slateblue4" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.70, label= "strong",
-                                        col = "slateblue4" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.21, label= "slight",
+        #                                 col = "royalblue" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.21, label= "slight",
+        #                                 col = "royalblue" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.40, label= "moderate",
+        #                                 col = "orchid3" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.41, label= "moderate",
+        #                                 col = "orchid3" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.70, label= "strong",
+        #                                 col = "slateblue4" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.70, label= "strong",
+        #                                 col = "slateblue4" )
         stop_time_sc <- Sys.time()
         
       } else if(input$point_opts_sc == 2){
@@ -1542,168 +1660,173 @@ server <- function(input, output, session) {
         d$dsciat_cres <- 1:nrow(d)
         d$dsciat_cres <- as.factor(d$dsciat_cres)
         coordinates_labels <- ifelse(length(unique(d$participant)) < 150, 
-                                     nrow(d)-1, nrow(d)-10 )
+                                     nrow(d) - 1, nrow(d)-10 )
         sc_graph <- ggplot(d,
                            aes(y = dsciat, x = dsciat_cres)) +
           geom_point(col = "springgreen4",  size = 2)
         sc_graph <- sc_graph + scale_x_discrete(name = "Participant",
                                                 labels = d$participant)
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.21, label= "slight",
-                                        col = "royalblue" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.21, label= "slight",
-                                        col = "royalblue" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.40, label= "moderate",
-                                        col = "orchid3" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.41, label= "moderate",
-                                        col = "orchid3" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.70, label= "strong",
-                                        col = "slateblue4" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels
-                                        ,
-                                        y = -0.70, label= "strong",
-                                        col = "slateblue4" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.21, label= "slight",
+        #                                 col = "royalblue" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.21, label= "slight",
+        #                                 col = "royalblue" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.40, label= "moderate",
+        #                                 col = "orchid3" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.41, label= "moderate",
+        #                                 col = "orchid3" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.70, label= "strong",
+        #                                 col = "slateblue4" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels
+        #                                 ,
+        #                                 y = -0.70, label= "strong",
+        #                                 col = "slateblue4" )
         stop_time_sc <- Sys.time()
         
-      } else if(input$point_opts_sc == 3){
+      } else if (input$point_opts_sc == 3){
         values$type_graph_sc <- "PointDecrescent"
         start_time_sc <- Sys.time()
-        d <- d[order(d$dsciat, decreasing = T), ]
+        d <- d[order(d$dsciat, decreasing = TRUE), ]
         d$dsciat_cres <- 1:nrow(d)
         d$dsciat_cres <- as.factor(d$dsciat_cres)
         coordinates_labels <- ifelse(length(unique(d$participant)) < 150, 
-                                     (nrow(d)-(nrow(d)-2)), 
-                                     (nrow(d)-(nrow(d)-15)) )
+                                     (nrow(d) - (nrow(d) - 2)), 
+                                     (nrow(d)- (nrow(d) - 15)) )
         sc_graph <- ggplot(d,
                            aes(y = dsciat, x = dsciat_cres)) +
           geom_point(col = "springgreen4",  size = 2)
         sc_graph <- sc_graph + scale_x_discrete(name = "Participant",
                                                 labels = d$participant)
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.21, label= "slight",
-                                        col = "royalblue" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.21, label= "slight",
-                                        col = "royalblue" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.40, label= "moderate",
-                                        col = "orchid3" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.41, label= "moderate",
-                                        col = "orchid3" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = 0.70, label= "strong",
-                                        col = "slateblue4" )
-        sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
-                                        y = -0.70, label= "strong",
-                                        col = "slateblue4" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.21, label= "slight",
+        #                                 col = "royalblue" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.21, label= "slight",
+        #                                 col = "royalblue" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.40, label= "moderate",
+        #                                 col = "orchid3" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.41, label= "moderate",
+        #                                 col = "orchid3" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = 0.70, label= "strong",
+        #                                 col = "slateblue4" )
+        # sc_graph <- sc_graph + annotate("text", x= coordinates_labels,
+        #                                 y = -0.70, label= "strong",
+        #                                 col = "slateblue4" )
         stop_time_sc <- Sys.time()
         
       }
       
       sc_graph <- sc_graph  + theme_classic()
-      sc_graph <- sc_graph + theme(axis.text.x = element_text(size = 5))
-      sc_graph <- sc_graph + geom_abline(slope = 0, intercept = 0.15,
-                                         col = "royalblue",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_abline(slope = 0, intercept = -0.15,
-                                         col = "royalblue",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_abline(slope = 0, intercept = 0.35,
-                                         col = "orchid3",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_abline(slope = 0, intercept = -0.35,
-                                         col = "orchid3",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_abline(slope = 0, intercept = 0.65,
-                                         col = "slateblue4",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_abline(slope = 0, intercept = -0.65,
-                                         col = "slateblue4",lty = 2, size = .50)
+      if (nrow(d) > 70){
+        sc_graph <- sc_graph + theme(
+          axis.text.x = element_blank())
+        } else {
+          sc_graph <- sc_graph + theme(axis.text.x = element_text(size = 5))
+        }
+      
+
+      # sc_graph <- sc_graph + geom_abline(slope = 0, intercept = 0.15,
+      #                                    col = "royalblue",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_abline(slope = 0, intercept = -0.15,
+      #                                    col = "royalblue",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_abline(slope = 0, intercept = 0.35,
+      #                                    col = "orchid3",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_abline(slope = 0, intercept = -0.35,
+      #                                    col = "orchid3",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_abline(slope = 0, intercept = 0.65,
+      #                                    col = "slateblue4",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_abline(slope = 0, intercept = -0.65,
+      #                                    col = "slateblue4",lty = 2, size = .50)
       sc_graph <- sc_graph + ylab("D-score")
-    }
-    ## histogram ####
-    else if(input$graph_sciat == 2){
+    } else if (input$graph_sciat == 2){ ## histogram ####
       values$type_graph_sc <- "Histogram"
       start_time_sc <- Sys.time()
       sc_graph <- ggplot(d,
                          aes(x = dsciat)) +
-        geom_histogram(bins = input$num.bin, col = "royalblue", 
+        geom_histogram(bins = input$num.bin_sc, col = "royalblue", 
                        fill = "royalblue",
                        alpha = .50)
       sc_graph <- sc_graph  + theme_classic()
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.15,
-                                         col = "royalblue",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.15,
-                                         col = "royalblue",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.35,
-                                         col = "orchid3",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.35,
-                                         col = "orchid3",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.65,
-                                         col = "slateblue4",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.65,
-                                         col = "slateblue4",lty = 2, size = .50)
-      sc_graph <- sc_graph + annotate("text", x= 0.20,
-                                      y = -0.20, label= "slight", 
-                                      col = "royalblue" )
-      sc_graph <- sc_graph + annotate("text", x= -0.10,
-                                      y = -0.20, label= "slight", 
-                                      col = "royalblue" )
-      sc_graph <- sc_graph + annotate("text", x= 0.43,
-                                      y = -0.20, label= "moderate",
-                                      col = "orchid3" )
-      sc_graph <- sc_graph + annotate("text", x= -0.25,
-                                      y = -0.20, label= "moderate",
-                                      col = "orchid3" )
-      sc_graph <- sc_graph + annotate("text", x= -0.58,
-                                      y = -0.20, label= "strong",
-                                      col = "slateblue4" )
-      sc_graph <- sc_graph + annotate("text", x= 0.71,
-                                      y = -0.20, label= "strong",
-                                      col = "slateblue4" )
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.15,
+      #                                    col = "royalblue",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.15,
+      #                                    col = "royalblue",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.35,
+      #                                    col = "orchid3",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.35,
+      #                                    col = "orchid3",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.65,
+      #                                    col = "slateblue4",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.65,
+      #                                    col = "slateblue4",lty = 2, size = .50)
+      # sc_graph <- sc_graph + annotate("text", x= 0.20,
+      #                                 y = -0.20, label= "slight", 
+      #                                 col = "royalblue" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.10,
+      #                                 y = -0.20, label= "slight", 
+      #                                 col = "royalblue" )
+      # sc_graph <- sc_graph + annotate("text", x= 0.43,
+      #                                 y = -0.20, label= "moderate",
+      #                                 col = "orchid3" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.25,
+      #                                 y = -0.20, label= "moderate",
+      #                                 col = "orchid3" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.58,
+      #                                 y = -0.20, label= "strong",
+      #                                 col = "slateblue4" )
+      # sc_graph <- sc_graph + annotate("text", x= 0.71,
+      #                                 y = -0.20, label= "strong",
+      #                                 col = "slateblue4" )
       sc_graph <- sc_graph + xlab("D-score") + theme(axis.title.y = element_blank())
       stop_time_sc <- Sys.time()
       
     }
     # density ####
-    else if(input$graph_sciat == 3){
+    else if (input$graph_sciat == 3){
       values$type_graph_sc <- "Density"
       start_time_sc <- Sys.time()
       sc_graph <- ggplot(d,
                          aes(x = dsciat)) +
         geom_density(alpha = 0.70, fill = "seagreen" , col = "seagreen")
       sc_graph <- sc_graph  + theme_classic()
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.15,
-                                         col = "royalblue",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.15,
-                                         col = "royalblue",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.35,
-                                         col = "orchid3",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.35,
-                                         col = "orchid3",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.65,
-                                         col = "slateblue4",lty = 2, size = .50)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.65,
-                                         col = "slateblue4",lty = 2, size = .50)
-      sc_graph <- sc_graph + annotate("text", x= 0.20,
-                                      y = -0.20, label= "slight", 
-                                      col = "royalblue" )
-      sc_graph <- sc_graph + annotate("text", x= -0.10,
-                                      y = -0.20, label= "slight", 
-                                      col = "royalblue" )
-      sc_graph <- sc_graph + annotate("text", x= 0.43,
-                                      y = -0.20, label= "moderate",
-                                      col = "orchid3" )
-      sc_graph <- sc_graph + annotate("text", x= -0.25,
-                                      y = -0.20, label= "moderate",
-                                      col = "orchid3" )
-      sc_graph <- sc_graph + annotate("text", x= -0.58,
-                                      y = -0.20, label= "strong",
-                                      col = "slateblue4" )
-      sc_graph <- sc_graph + annotate("text", x= 0.71,
-                                      y = -0.20, label= "strong",
-                                      col = "slateblue4" )
-      sc_graph <- sc_graph + xlab("D-score") + theme(axis.title.y = element_blank())
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.15,
+      #                                    col = "royalblue",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.15,
+      #                                    col = "royalblue",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.35,
+      #                                    col = "orchid3",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.35,
+      #                                    col = "orchid3",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.65,
+      #                                    col = "slateblue4",lty = 2, size = .50)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.65,
+      #                                    col = "slateblue4",lty = 2, size = .50)
+      # sc_graph <- sc_graph + annotate("text", x= 0.20,
+      #                                 y = -0.20, label= "slight", 
+      #                                 col = "royalblue" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.10,
+      #                                 y = -0.20, label= "slight", 
+      #                                 col = "royalblue" )
+      # sc_graph <- sc_graph + annotate("text", x= 0.43,
+      #                                 y = -0.20, label= "moderate",
+      #                                 col = "orchid3" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.25,
+      #                                 y = -0.20, label= "moderate",
+      #                                 col = "orchid3" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.58,
+      #                                 y = -0.20, label= "strong",
+      #                                 col = "slateblue4" )
+      # sc_graph <- sc_graph + annotate("text", x= 0.71,
+      #                                 y = -0.20, label= "strong",
+      #                                 col = "slateblue4" )
+      # sc_graph <- sc_graph + xlab("D-score") + theme(axis.title.y = element_blank())
       stop_time_sc <- Sys.time()
     }
     # density + histogram #####
@@ -1712,43 +1835,43 @@ server <- function(input, output, session) {
       start_time_sc <- Sys.time()
       sc_graph <- ggplot(d,
                          aes(x = dsciat)) +
-        geom_histogram(aes(y=..density..), bins = input$num.bin1, 
+        geom_histogram(aes(y=..density..), bins = input$num.bin_sc, 
                        col = "royalblue",
                        fill = "royalblue", alpha = .50)
       sc_graph <- sc_graph  + theme_classic()
       sc_graph <- sc_graph + geom_density(alpha = .70, col = "seagreen", 
                                           fill = "seagreen", trim =F)
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.15,
-                                         col = "royalblue", lty = 2, size = .70)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.15,
-                                         col = "royalblue", lty = 2, size = .70)
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.35,
-                                         col = "orchid3", lty = 2, size = .70)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.35,
-                                         col = "orchid3", lty = 2, size = .70)
-      sc_graph <- sc_graph + geom_vline( xintercept = 0.65,
-                                         col = "slateblue4", lty = 2, size = .70)
-      sc_graph <- sc_graph + geom_vline( xintercept = -0.65,
-                                         col = "slateblue4", lty = 2, size = .70)
-      
-      sc_graph <- sc_graph + annotate("text", x= 0.20,
-                                      y = -0.20, label= "slight", 
-                                      col = "royalblue" )
-      sc_graph <- sc_graph + annotate("text", x= -0.10,
-                                      y = -0.20, label= "slight", 
-                                      col = "royalblue" )
-      sc_graph <- sc_graph + annotate("text", x= 0.43,
-                                      y = -0.20, label= "moderate",
-                                      col = "orchid3" )
-      sc_graph <- sc_graph + annotate("text", x= -0.25,
-                                      y = -0.20, label= "moderate",
-                                      col = "orchid3" )
-      sc_graph <- sc_graph + annotate("text", x= -0.58,
-                                      y = -0.20, label= "strong",
-                                      col = "slateblue4" )
-      sc_graph <- sc_graph + annotate("text", x= 0.71,
-                                      y = -0.20, label= "strong",
-                                      col = "slateblue4" )
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.15,
+      #                                    col = "royalblue", lty = 2, size = .70)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.15,
+      #                                    col = "royalblue", lty = 2, size = .70)
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.35,
+      #                                    col = "orchid3", lty = 2, size = .70)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.35,
+      #                                    col = "orchid3", lty = 2, size = .70)
+      # sc_graph <- sc_graph + geom_vline( xintercept = 0.65,
+      #                                    col = "slateblue4", lty = 2, size = .70)
+      # sc_graph <- sc_graph + geom_vline( xintercept = -0.65,
+      #                                    col = "slateblue4", lty = 2, size = .70)
+      # 
+      # sc_graph <- sc_graph + annotate("text", x= 0.20,
+      #                                 y = -0.20, label= "slight", 
+      #                                 col = "royalblue" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.10,
+      #                                 y = -0.20, label= "slight", 
+      #                                 col = "royalblue" )
+      # sc_graph <- sc_graph + annotate("text", x= 0.43,
+      #                                 y = -0.20, label= "moderate",
+      #                                 col = "orchid3" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.25,
+      #                                 y = -0.20, label= "moderate",
+      #                                 col = "orchid3" )
+      # sc_graph <- sc_graph + annotate("text", x= -0.58,
+      #                                 y = -0.20, label= "strong",
+      #                                 col = "slateblue4" )
+      # sc_graph <- sc_graph + annotate("text", x= 0.71,
+      #                                 y = -0.20, label= "strong",
+      #                                 col = "slateblue4" )
       sc_graph <- sc_graph + xlab("D-score") + theme(axis.title.y = element_blank())
       stop_time_sc <- Sys.time()
     }
@@ -1764,8 +1887,6 @@ server <- function(input, output, session) {
                    }
                  })
     return(values$sc_graph)
-    
-    
   })
   
   # single graph indicator SC-IAT -----
@@ -1810,7 +1931,7 @@ server <- function(input, output, session) {
     single_id
   })
   
-  # area indicator SC-IAT
+  # area indicator SC-IAT ----
   output$brush_info_sc <- renderPrint({
     if(input$sc_reset == 0){
       validate(
@@ -1876,8 +1997,8 @@ server <- function(input, output, session) {
     
   })
   
-  # toggle state for the download graph button ----
-  # (become active only when the values$g_graph object has something inside) IAT 
+  # toggle state for the download graph button IAT ----
+  # (become active only when the values$g_graph object has something inside) 
   observe({
     shinyjs::toggleState("down_plot", !(is.null(values$g_graph)))
   })
@@ -1898,7 +2019,8 @@ server <- function(input, output, session) {
     dframe <- values$display
     
     dframe <- dframe[, c("participant", "dscore")]
-    # specificy the order of participants for getting the correct point iun the dataframe
+    # specificy the order of participants for getting the correct point in the 
+    # dataframe
     if(input$point_opts == 1){
       dframe <- dframe[order(dframe$participant), ]
       dframe$dscore_cres <- dframe$participant
@@ -1926,7 +2048,7 @@ server <- function(input, output, session) {
   })
   
   
-  # multiple indicator in graph IAT #####
+  # multiple indicator in graph IAT ----
   output$brush_info <- renderPrint({
     # Display a message while waiting for data
     if(input$reset == 0){
@@ -1943,17 +2065,17 @@ server <- function(input, output, session) {
     
     dframe <- dframe[, c("participant", "dscore")]
     # specificy the order of participants for getting the correct point iun the dataframe
-    if(input$point_opts == 1){
+    if (input$point_opts == 1){
       dframe <- dframe[order(dframe$participant), ]
       dframe$dscore_cres <- dframe$participant
       dframe$dscore_cres <- as.factor(dframe$dscore_cres)
       
-    } else if(input$point_opts == 2){
+    } else if (input$point_opts == 2) {
       dframe <- dframe[order(dframe$dscore), ]
       dframe$dscore_cres <- 1:nrow(dframe)
       dframe$dscore_cres <- as.factor(dframe$dscore_cres)
       
-    } else if(input$point_opts == 3){
+    } else if (input$point_opts == 3) {
       dframe <- dframe[order(dframe$dscore, decreasing = T), ]
       dframe$dscore_cres <- 1:nrow(dframe)
       dframe$dscore_cres <- as.factor(dframe$dscore_cres)
@@ -1994,7 +2116,7 @@ server <- function(input, output, session) {
     d_plot
     
   })
-  ## test pratice reliability #####
+  ## test pratice reliability ----
   output$pt_reliability <- renderPrint({
     # Display a message while waiting for data
     if(input$reset == 0){
@@ -2011,8 +2133,8 @@ server <- function(input, output, session) {
     round(test_practice_rel[2,1],2)
   })
   
-  
-  # ## mean block ####
+  # Descriptive statistics IAT ----
+  # mean block ----
   output$mean.block <- renderPrint({
     # Display a message while waiting for data
     if(input$reset == 0){
@@ -2054,7 +2176,7 @@ server <- function(input, output, session) {
   })
   
   
-  #  # ## accuracy block IAT ####
+  # accuracy block IAT ----
   output$accuracy_block <- renderPrint({
     # Display a message while waiting for data
     if(input$reset == 0){
@@ -2088,11 +2210,11 @@ server <- function(input, output, session) {
     
     colnames(accuracy_descript) <- c("", "Proportion_correct")
     accuracy_descript$Proportion_correct <- round(
-      accuracy_descript$Proportion_correct,2)
+      accuracy_descript$Proportion_correct, 2)
     accuracy_descript
   })
   
-  #  DOWNLOAD Results IAT ####
+  #  DOWNLOAD Results IAT ----
   output$downloadData <- downloadHandler(
     # This function returns a string which tells the client
     # browser what name to use when saving the file.
@@ -2107,7 +2229,7 @@ server <- function(input, output, session) {
   )
   #
   
-  # reset app IAT ####
+  # reset app IAT ----
   observeEvent(input$reset | !is.null(values$alert), 
                {
                  shinyjs::reset("Dapp")
@@ -2124,7 +2246,7 @@ server <- function(input, output, session) {
                  
                })  
   
-  # Download graphs IAT ####
+  # Download graphs IAT ----
   output$down_plot <- downloadHandler(
     filename = function(){
       paste(values$type_graph, "Dscore",input$sel_d, ".pdf", sep = "")
@@ -2141,7 +2263,7 @@ server <- function(input, output, session) {
     # This function returns a string which tells the client
     # browser what name to use when saving the file.
     filename = function() {
-      paste("SCIAT", ".csv", sep = "")
+      paste("Dscore_SCIAT", ".csv", sep = "")
     },
     content = function(file) {
       calc_d <- values$calc_d[, c("participant", "dsciat")]
@@ -2150,28 +2272,30 @@ server <- function(input, output, session) {
                              by ="participant") 
       write.table(sc_final_data, file, sep = ",",
                   row.names = FALSE)
+      rm(sc_final_data)
     }
   )
   
 
-  # Download graphs SC-IAT ####
+  # Download graphs SC-IAT -----
   output$down_plot_sc <- downloadHandler(
     filename = function(){
       paste(values$type_graph_sc, "SCIAT", ".pdf", sep = "")
     }, 
     content = function(file){
-      graph <- values$sc_graph + theme(plot.margin=unit(c(1.2,1.2,1.2,1.2),"cm"))
+      graph <- values$sc_graph + theme(
+        plot.margin = unit(c(1.2,1.2,1.2,1.2), "cm"))
       ggsave(file, plot = graph, width = 15, height = 7)
       
     }
   )
   
   
-  # DOWNLOAD template ####
+  # DOWNLOAD template IAT ----
   
   output$downloadTemplate <- downloadHandler(
     filename = function() {
-      paste("templateDshiny", ".csv", sep = "")
+      paste("templateDscore_IAT", ".csv", sep = "")
     },
     content = function(file) {
       
@@ -2179,6 +2303,22 @@ server <- function(input, output, session) {
       data[is.na(data)] <- ""
       colnames(data) <- c("participant", "block", "correct",
                           "latency")
+      write.table(data, file, sep = ",", row.names = FALSE)
+    }
+  )
+  
+  # DOWNLOAD template SC-IAT ----
+  
+  output$templateSciat <- downloadHandler(
+    filename = function() {
+      paste("templateDscore_SCIAT", ".csv", sep = "")
+    },
+    content = function(file) {
+      
+      data <- data.frame(matrix(nrow=1, ncol = 5))
+      data[is.na(data)] <- ""
+      colnames(data) <- c("participant", "block", "correct",
+                          "latency", "alert")
       write.table(data, file, sep = ",", row.names = FALSE)
     }
   )
@@ -2212,22 +2352,22 @@ server <- function(input, output, session) {
     }
     values$tot_window
   })  
-  # output reliability ####
-  output$rel_output <- renderPrint({
-    if(input$sc_reset == 0){
-      validate(
-        need(input$sc_update > 0 && 
-               (!is.null(values$sciat_rel)), "Waiting for data")
-      ) 
-    } else if (input$sc_reset > 0){
-      validate(
-        need(input$sc_update > 0  && 
-               (!is.null(values$sciat_rel)), "Waiting for data")
-      ) 
-    }
-    
-    values$sciat_rel
-  })
+  # # output reliability ####
+  # output$rel_output <- renderPrint({
+  #   if(input$sc_reset == 0){
+  #     validate(
+  #       need(input$sc_update > 0 && 
+  #              (!is.null(values$sciat_rel)), "Waiting for data")
+  #     ) 
+  #   } else if (input$sc_reset > 0){
+  #     validate(
+  #       need(input$sc_update > 0  && 
+  #              (!is.null(values$sciat_rel)), "Waiting for data")
+  #     ) 
+  #   }
+  #   
+  #   values$sciat_rel
+  # })
   
   # percentage of responses beyond the response time set by the users
   output$perc_rt_delete <- renderPrint({
@@ -2246,7 +2386,7 @@ server <- function(input, output, session) {
     
   })
   
-  # results summary ####
+  # results summary SC-IAT -----
   output$sciat_res <- renderPrint({
     if(input$sc_reset == 0){
       validate(
@@ -2263,6 +2403,22 @@ server <- function(input, output, session) {
     
   })
   
+  # Reset App SC-IAT ----
+  observeEvent(input$sc_reset | !is.null(values$sc_alert), 
+               {
+                 shinyjs::reset("sciatApp")
+                 values$sc_ready <- NULL
+                 values$out_filter_sc <- NULL
+                 values$calc_d <- NULL
+                 values$sciat_dataset <- NULL
+                 values$tot_window <- NULL
+                 values$perce_tot_fast <- NULL
+                 values$sc_final_data <- NULL
+                 values$sc_graph <- NULL
+                 values$sc_alert <- NULL
+                 values$mean_correct_sc <- NULL
+                 labels.options_sc <- NULL
+               })
 }
 
 
